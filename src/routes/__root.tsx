@@ -78,17 +78,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Nocturne — AI Market Analysis for Founders" },
+      { title: "Smart Failure Detection" },
       {
         name: "description",
-        content:
-          "Submit your startup idea and instantly get a market & competitor breakdown crafted for founders working late.",
+        content: "Evaluate project risk, market signals, and execution readiness in one workspace.",
       },
-      { property: "og:title", content: "Nocturne — AI Market Analysis for Founders" },
+      { property: "og:title", content: "Smart Failure Detection" },
       {
         property: "og:description",
-        content:
-          "Submit your startup idea and instantly get a market & competitor breakdown crafted for founders working late.",
+        content: "Evaluate project risk, market signals, and execution readiness in one workspace.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -98,7 +96,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

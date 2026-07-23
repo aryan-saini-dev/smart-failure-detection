@@ -35,13 +35,13 @@ import { computeAnalysis, randomDemo, type Project } from "@/lib/analysis";
 export const Route = createFileRoute("/project-input")({
   head: () => ({
     meta: [
-      { title: "Project Input — Nocturne" },
+      { title: "Project Input — Smart Failure Detection" },
       {
         name: "description",
         content:
           "Submit your startup details for an instant market, competitor, and risk analysis.",
       },
-      { property: "og:title", content: "Project Input — Nocturne" },
+      { property: "og:title", content: "Project Input — Smart Failure Detection" },
       {
         property: "og:description",
         content:
@@ -92,9 +92,7 @@ function ProjectInputPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<Project | null>(null);
-  const [tab, setTab] = useState<"overview" | "competitors" | "risk" | "market">(
-    "overview",
-  );
+  const [tab, setTab] = useState<"overview" | "competitors" | "risk" | "market">("overview");
 
   const analysis = useMemo(() => (saved ? computeAnalysis(saved) : null), [saved]);
 
@@ -143,12 +141,9 @@ function ProjectInputPage() {
           Project input
         </p>
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
-          Project Submission
+          Startup Submission
         </h1>
-        <p className="mt-3 max-w-2xl text-[color:var(--muted-foreground)]">
-          Tell Nocturne about your startup. The moment you submit, a fresh
-          market and competitor analysis appears on the right.
-        </p>
+        
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
@@ -180,10 +175,7 @@ function ProjectInputPage() {
             </Field>
 
             <div className="grid grid-cols-2 gap-4">
-              <Field
-                label="Industry"
-                icon={<Radar className="h-3.5 w-3.5" strokeWidth={1.5} />}
-              >
+              <Field label="Industry" icon={<Radar className="h-3.5 w-3.5" strokeWidth={1.5} />}>
                 <input
                   list="industry-list"
                   value={form.industry}
@@ -216,10 +208,7 @@ function ProjectInputPage() {
               </Field>
             </div>
 
-            <Field
-              label="Target market"
-              icon={<Users className="h-3.5 w-3.5" strokeWidth={1.5} />}
-            >
+            <Field label="Target market" icon={<Users className="h-3.5 w-3.5" strokeWidth={1.5} />}>
               <input
                 value={form.target_market}
                 onChange={(e) => update("target_market", e.target.value)}
@@ -301,14 +290,8 @@ function ProjectInputPage() {
                   <h2 className="font-display text-2xl font-semibold">{saved.name}</h2>
                   <div className="flex flex-wrap gap-4 text-xs text-[color:var(--muted-foreground)]">
                     <Stat label="Sector growth" value={`${analysis.growth}%`} accent />
-                    <Stat
-                      label="Overall risk"
-                      value={`${analysis.overallRisk}/100`}
-                    />
-                    <Stat
-                      label="Budget"
-                      value={`$${saved.budget.toLocaleString()}`}
-                    />
+                    <Stat label="Overall risk" value={`${analysis.overallRisk}/100`} />
+                    <Stat label="Budget" value={`$${saved.budget.toLocaleString()}`} />
                   </div>
                 </div>
               </header>
@@ -368,12 +351,7 @@ function ProjectInputPage() {
                     <ResponsiveContainer width="100%" height={260}>
                       <BarChart data={analysis.risks} layout="vertical">
                         <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                        <XAxis
-                          type="number"
-                          domain={[0, 100]}
-                          stroke="#71717A"
-                          fontSize={11}
-                        />
+                        <XAxis type="number" domain={[0, 100]} stroke="#71717A" fontSize={11} />
                         <YAxis
                           type="category"
                           dataKey="category"
@@ -386,13 +364,7 @@ function ProjectInputPage() {
                           {analysis.risks.map((r, i) => (
                             <Cell
                               key={i}
-                              fill={
-                                r.score > 65
-                                  ? "#ef4444"
-                                  : r.score > 45
-                                    ? "#F59E0B"
-                                    : "#10b981"
-                              }
+                              fill={r.score > 65 ? "#ef4444" : r.score > 45 ? "#F59E0B" : "#10b981"}
                             />
                           ))}
                         </Bar>
@@ -404,9 +376,7 @@ function ProjectInputPage() {
 
               {tab === "competitors" && (
                 <div className="glass-card p-6">
-                  <h3 className="font-display text-lg font-semibold">
-                    Competitor landscape
-                  </h3>
+                  <h3 className="font-display text-lg font-semibold">Competitor landscape</h3>
                   <p className="mt-1 text-sm text-[color:var(--muted-foreground)]">
                     Estimated positioning against{" "}
                     <span className="text-[color:var(--foreground)]">
@@ -431,17 +401,13 @@ function ProjectInputPage() {
                             <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-400/70">
                               Strength
                             </p>
-                            <p className="text-[color:var(--foreground)]/90">
-                              {c.strength}
-                            </p>
+                            <p className="text-[color:var(--foreground)]/90">{c.strength}</p>
                           </div>
                           <div>
                             <p className="text-[10px] font-mono uppercase tracking-widest text-red-400/70">
                               Weakness
                             </p>
-                            <p className="text-[color:var(--foreground)]/90">
-                              {c.weakness}
-                            </p>
+                            <p className="text-[color:var(--foreground)]/90">{c.weakness}</p>
                           </div>
                         </div>
                         <div className="h-2 w-32 overflow-hidden rounded-full bg-white/5">
@@ -461,9 +427,7 @@ function ProjectInputPage() {
                   {analysis.risks.map((r) => (
                     <div key={r.category} className="glass-card p-6">
                       <div className="flex items-center justify-between">
-                        <p className="font-display text-lg font-semibold">
-                          {r.category}
-                        </p>
+                        <p className="font-display text-lg font-semibold">{r.category}</p>
                         <span
                           className={`rounded-md px-2 py-0.5 font-mono text-xs ${
                             r.score > 65
@@ -488,9 +452,7 @@ function ProjectInputPage() {
                           style={{ width: `${r.score}%` }}
                         />
                       </div>
-                      <p className="mt-4 text-sm text-[color:var(--muted-foreground)]">
-                        {r.note}
-                      </p>
+                      <p className="mt-4 text-sm text-[color:var(--muted-foreground)]">{r.note}</p>
                     </div>
                   ))}
                 </div>
@@ -510,35 +472,23 @@ function ProjectInputPage() {
                           paddingAngle={3}
                         >
                           {analysis.marketSegments.map((_, i) => (
-                            <Cell
-                              key={i}
-                              fill={
-                                ["#F59E0B", "#fbbf24", "#71717A", "#3f3f46"][i]
-                              }
-                            />
+                            <Cell key={i} fill={["#F59E0B", "#fbbf24", "#71717A", "#3f3f46"][i]} />
                           ))}
                         </Pie>
                         <Tooltip contentStyle={tooltipStyle} />
-                        <Legend
-                          wrapperStyle={{ fontSize: 12, color: "#71717A" }}
-                        />
+                        <Legend wrapperStyle={{ fontSize: 12, color: "#71717A" }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </ChartCard>
                   <div className="glass-card p-6">
-                    <h3 className="font-display text-lg font-semibold">
-                      Positioning summary
-                    </h3>
+                    <h3 className="font-display text-lg font-semibold">Positioning summary</h3>
                     <p className="mt-2 text-sm text-[color:var(--muted-foreground)]">
                       {saved.description}
                     </p>
                     <dl className="mt-5 space-y-3 text-sm">
                       <Row label="Target market" value={saved.target_market || "—"} />
                       <Row label="Model" value={saved.business_model || "—"} />
-                      <Row
-                        label="Industry growth"
-                        value={`${analysis.growth}% projected annual`}
-                      />
+                      <Row label="Industry growth" value={`${analysis.growth}% projected annual`} />
                       <Row
                         label="Recommended focus"
                         value={
@@ -582,15 +532,7 @@ function Field({
   );
 }
 
-function Stat({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
+function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <div>
       <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted-foreground)]">
@@ -635,9 +577,7 @@ function Row({ label, value }: { label: string; value: string }) {
       <dt className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--muted-foreground)]">
         {label}
       </dt>
-      <dd className="max-w-[60%] text-right text-[color:var(--foreground)]/90">
-        {value}
-      </dd>
+      <dd className="max-w-[60%] text-right text-[color:var(--foreground)]/90">{value}</dd>
     </div>
   );
 }
@@ -651,7 +591,9 @@ function EmptyAnalysis() {
       </div>
       <h3 className="font-display text-xl font-semibold">Awaiting your project</h3>
       <p className="max-w-md text-sm text-[color:var(--muted-foreground)]">
-        Complete the form on the left and hit <span className="text-[color:var(--foreground)]">Run analysis</span>. Your revenue projection, competitor map, and risk breakdown appear here.
+        Complete the form on the left and hit{" "}
+        <span className="text-[color:var(--foreground)]">Run analysis</span>. Your revenue
+        projection, competitor map, and risk breakdown appear here.
       </p>
     </div>
   );

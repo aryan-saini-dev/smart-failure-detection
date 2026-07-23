@@ -4,20 +4,18 @@ import { ArrowRight, LineChart, Radar, ShieldAlert } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Nocturne — Market Intelligence for Startup Founders" },
+      { title: "Smart Failure Detection" },
       {
         name: "description",
-        content:
-          "Describe your startup and get an instant market, competitor, and risk analysis. Built for founders who work at 2am.",
+        content: "Review a project and get a clear view of market, competitor, and execution risk.",
       },
       {
         property: "og:title",
-        content: "Nocturne — Market Intelligence for Startup Founders",
+        content: "Smart Failure Detection",
       },
       {
         property: "og:description",
-        content:
-          "Describe your startup and get an instant market, competitor, and risk analysis.",
+        content: "Review a project and get a clear view of market, competitor, and execution risk.",
       },
     ],
   }),
@@ -51,15 +49,14 @@ function Index() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--accent)] opacity-60" />
             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[color:var(--accent)]" />
           </span>
-          Live intelligence
+          Workspace overview
         </div>
         <h1 className="mt-8 max-w-3xl font-display text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
           A quiet room for loud ideas.
         </h1>
         <p className="mt-6 max-w-2xl text-lg text-[color:var(--muted-foreground)]">
-          Drop your startup thesis. Nocturne returns a market read, competitor
-          map, and risk breakdown — the kind of clarity you'd normally pay a
-          strategist for.
+          Add your project details to generate a market read, competitor map, and risk breakdown in
+          a single workspace.
         </p>
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
@@ -67,7 +64,10 @@ function Index() {
             className="group inline-flex items-center gap-2 rounded-lg bg-[color:var(--accent)] px-6 py-3 text-sm font-medium text-[color:var(--accent-foreground)] transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_28px_rgba(245,158,11,0.45)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--background)]"
           >
             Start a new analysis
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" strokeWidth={1.75} />
+            <ArrowRight
+              className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+              strokeWidth={1.75}
+            />
           </Link>
           <Link
             to="/project-input"
@@ -79,7 +79,10 @@ function Index() {
 
         <div className="mt-20 grid gap-6 md:grid-cols-3">
           {features.map((f) => (
-            <div key={f.title} className="glass-card p-6 transition-all duration-300 hover:border-white/15 hover:scale-[1.02]">
+            <div
+              key={f.title}
+              className="glass-card p-6 transition-all duration-300 hover:border-white/15 hover:scale-[1.02]"
+            >
               <f.icon className="h-5 w-5 text-[color:var(--accent)]" strokeWidth={1.5} />
               <h3 className="mt-4 font-display text-lg font-semibold">{f.title}</h3>
               <p className="mt-2 text-sm text-[color:var(--muted-foreground)]">{f.body}</p>
