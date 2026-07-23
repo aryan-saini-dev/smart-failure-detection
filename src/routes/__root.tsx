@@ -131,8 +131,32 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="relative min-h-screen overflow-x-hidden">
+        <div className="pointer-events-none fixed inset-0 -z-10">
+          <div
+            className="ambient-orb"
+            style={{
+              top: "-10%",
+              left: "20%",
+              width: "600px",
+              height: "600px",
+              background: "rgba(245, 158, 11, 0.18)",
+            }}
+          />
+          <div
+            className="ambient-orb"
+            style={{
+              bottom: "-20%",
+              right: "-10%",
+              width: "700px",
+              height: "700px",
+              background: "rgba(99, 102, 241, 0.12)",
+            }}
+          />
+        </div>
+        <SiteNav />
+        <Outlet />
+      </div>
     </QueryClientProvider>
   );
 }
