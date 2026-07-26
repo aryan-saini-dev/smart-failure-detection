@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, LogOut, ShieldCheck } from "lucide-react";
+import { ChevronDown, LogOut, ShieldCheck, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
+import smartFailureLogo from "../../Assets/Smart_Logo.png";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -12,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import { clearDemoSession, hasDemoSession } from "@/lib/demo-session";
 
 const links = [
   { to: "/", label: "Overview" },
@@ -24,15 +26,26 @@ export function SiteNav() {
     email?: string;
     avatarUrl?: string;
     initials: string;
+    isDemo?: boolean;
   } | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
+    function syncDemoUser() {
+      if (hasDemoSession()) setUser({ email: "Demo user", initials: "DU", isDemo: true });
+      else setUser(null);
+    }
+
     void supabase.auth
       .getUser()
       .then(({ data }) => {
-        if (!mounted || !data.user) return;
+        if (!mounted) return;
+        if (!data.user && hasDemoSession()) {
+          setUser({ email: "Demo user", initials: "DU", isDemo: true });
+          return;
+        }
+        if (!data.user) return;
         const email = data.user.email ?? "";
         const name = data.user.user_metadata?.full_name ?? data.user.user_metadata?.name ?? email;
         const initials =
@@ -55,26 +68,33 @@ export function SiteNav() {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (mounted && !session?.user) setUser(null);
     });
+    window.addEventListener("smart-failure-demo-change", syncDemoUser);
 
     return () => {
       mounted = false;
       listener.subscription.unsubscribe();
+      window.removeEventListener("smart-failure-demo-change", syncDemoUser);
     };
   }, []);
 
   async function signOut() {
-    await supabase.auth.signOut();
+    if (user?.isDemo) clearDemoSession();
+    else await supabase.auth.signOut();
     setUser(null);
   }
 
   return (
     <header className="sticky top-0 z-40 border-b border-[color:var(--border)] bg-[color:var(--background)]/70 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center gap-6 px-6 py-3.5 md:px-10">
+      <div className="mx-auto flex max-w-7xl items-center gap-5 px-5 py-3 md:px-8">
         <Link to="/" className="group flex min-w-0 items-center gap-2.5">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[color:var(--accent)] text-xs font-bold tracking-tight text-[color:var(--accent-foreground)]">
-            SF
+          <span className="flex h-9 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/10 bg-white/90">
+            <img
+              src={smartFailureLogo}
+              alt="Smart Failure Detection"
+              className="h-full w-full scale-[2.2] object-cover object-center"
+            />
           </span>
-          <span className="truncate font-display text-base font-semibold tracking-tight sm:text-lg">
+          <span className="truncate font-display text-sm font-semibold tracking-tight sm:text-base">
             Smart Failure Detection
           </span>
         </Link>
@@ -86,7 +106,7 @@ export function SiteNav() {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`relative rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:text-[color:var(--accent)] ${
+                className={`relative rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:text-[color:var(--accent)] ${
                   active
                     ? "text-[color:var(--foreground)]"
                     : "text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)]"
@@ -102,7 +122,8 @@ export function SiteNav() {
         </nav>
 
         <div className="ml-auto flex items-center">
-          <DropdownMenu>
+          {user ? (
+            <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 rounded-full p-1 transition-colors hover:bg-white/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]">
               <Avatar className="h-8 w-8 border border-white/15">
                 {user?.avatarUrl && <AvatarImage src={user.avatarUrl} alt="Profile" />}
@@ -119,18 +140,32 @@ export function SiteNav() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">Workspace account</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {user?.email ?? "Signed in"}
+                      {user?.isDemo ? "Local demo workspace" : user?.email ?? "Signed in"}
                     </p>
                   </div>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/profile">
+                  <UserRound />
+                  Profile
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => void signOut()}>
                 <LogOut />
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+            </DropdownMenu>
+          ) : (
+            <Link
+              to="/login"
+              className="rounded-md border border-white/12 px-3 py-1.5 text-xs font-medium text-[color:var(--foreground)] transition-colors hover:border-white/25 hover:bg-white/5"
+            >
+              Sign in
+            </Link>
+          )}
         </div>
       </div>
     </header>

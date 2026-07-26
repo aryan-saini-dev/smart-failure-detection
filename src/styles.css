@@ -74,6 +74,13 @@
   --border: oklch(1 0 0 / 0.08);
 }
 
+/* Match the previous 80% browser-zoom density on desktop without shrinking mobile controls. */
+@media (min-width: 768px) {
+  html {
+    font-size: 80%;
+  }
+}
+
 .dark {
   --background: oklch(0.15 0.01 260);
   --background-alt: oklch(0.18 0.012 260);

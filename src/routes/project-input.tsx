@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { computeAnalysis, randomDemo, type Project } from "@/lib/analysis";
+import { hasDemoSession, saveDemoProject } from "@/lib/demo-session";
 
 export const Route = createFileRoute("/project-input")({
   head: () => ({
@@ -108,6 +109,12 @@ function ProjectInputPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const { data: userData } = await supabase.auth.getUser();
+    const isDemo = hasDemoSession();
+    if (!userData.user && !isDemo) {
+      setError("Sign in or join as a guest before saving an analysis.");
+      return;
+    }
     if (!form.name.trim() || !form.industry.trim() || !form.description.trim()) {
       setError("Please complete name, industry, and description.");
       return;
@@ -117,21 +124,34 @@ function ProjectInputPage() {
       return;
     }
     setSubmitting(true);
-    const { error: err } = await supabase.from("projects").insert({
-      name: form.name.trim(),
-      industry: form.industry.trim(),
-      business_model: form.business_model.trim(),
-      target_market: form.target_market.trim(),
-      budget: form.budget,
-      description: form.description.trim(),
-    });
+    if (isDemo) {
+      saveDemoProject({ ...form });
+      setSubmitting(false);
+      setSaved({ ...form });
+      setTab("overview");
+      return;
+    }
+    const { data: project, error: err } = await supabase
+      .from("projects")
+      .insert({
+        name: form.name.trim(),
+        industry: form.industry.trim(),
+        business_model: form.business_model.trim(),
+        target_market: form.target_market.trim(),
+        budget: form.budget,
+        description: form.description.trim(),
+      })
+      .select("id")
+      .single();
     setSubmitting(false);
     if (err) {
       setError(err.message);
       return;
     }
-    setSaved({ ...form });
-    setTab("overview");
+    if (project) {
+      setSaved({ ...form });
+      setTab("overview");
+    }
   }
 
   return (
@@ -143,7 +163,6 @@ function ProjectInputPage() {
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
           Startup Submission
         </h1>
-        
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
@@ -322,7 +341,7 @@ function ProjectInputPage() {
               {tab === "overview" && (
                 <div className="grid gap-6 md:grid-cols-2">
                   <ChartCard title="6-month revenue projection" icon={TrendingUp}>
-                    <ResponsiveContainer width="100%" height={260}>
+                    <ResponsiveContainer width="100%" height={220}>
                       <LineChart data={analysis.projections}>
                         <CartesianGrid stroke="rgba(255,255,255,0.05)" />
                         <XAxis dataKey="month" stroke="#71717A" fontSize={11} />
@@ -348,7 +367,7 @@ function ProjectInputPage() {
                   </ChartCard>
 
                   <ChartCard title="Risk profile" icon={AlertTriangle}>
-                    <ResponsiveContainer width="100%" height={260}>
+                    <ResponsiveContainer width="100%" height={220}>
                       <BarChart data={analysis.risks} layout="vertical">
                         <CartesianGrid stroke="rgba(255,255,255,0.05)" />
                         <XAxis type="number" domain={[0, 100]} stroke="#71717A" fontSize={11} />
@@ -461,7 +480,7 @@ function ProjectInputPage() {
               {tab === "market" && (
                 <div className="grid gap-6 md:grid-cols-[1fr_1fr]">
                   <ChartCard title="Adoption segments" icon={Users}>
-                    <ResponsiveContainer width="100%" height={280}>
+                    <ResponsiveContainer width="100%" height={240}>
                       <PieChart>
                         <Pie
                           data={analysis.marketSegments}
