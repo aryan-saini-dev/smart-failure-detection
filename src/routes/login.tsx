@@ -2,8 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Eye, LockKeyhole, Mail, Sparkles, UserRound } from "lucide-react";
 import { useState } from "react";
 
-import { supabase } from "@/integrations/supabase/client";
+import { clearSessionToken, loginUser, registerUser, setSessionToken } from "@/lib/local-api";
 import { startDemoSession } from "@/lib/demo-session";
+import { Logo } from "@/components/logo";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -24,10 +25,6 @@ function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const authRedirectUrl = new URL(
-    "/login",
-    import.meta.env.VITE_AUTH_REDIRECT_URL || window.location.origin,
-  ).toString();
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -35,28 +32,21 @@ function LoginPage() {
     setNotice(null);
     setSubmitting(true);
 
-    const result =
-      mode === "sign-in"
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: { full_name: name.trim() },
-              emailRedirectTo: authRedirectUrl,
-            },
-          });
-
-    setSubmitting(false);
-    if (result.error) {
-      setError(result.error.message);
+    try {
+      clearSessionToken();
+      const result =
+        mode === "sign-in"
+          ? await loginUser({ email, password })
+          : await registerUser({ name: name.trim(), email, password });
+      setSessionToken(result.token);
+      setSubmitting(false);
+      void navigate({ to: "/profile" });
+      return;
+    } catch (error) {
+      setSubmitting(false);
+      setError(error instanceof Error ? error.message : "Something went wrong.");
       return;
     }
-    if (!result.data.session) {
-      setNotice("Check your email to confirm your account, then return here to sign in.");
-      return;
-    }
-    void navigate({ to: "/profile" });
   }
 
   function joinDemo() {
@@ -69,8 +59,11 @@ function LoginPage() {
   return (
     <main className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl items-center gap-10 px-6 py-12 md:grid-cols-[1.1fr_0.9fr] md:px-8">
       <section>
-        <p className="font-mono text-xs uppercase tracking-[0.22em] text-[color:var(--accent)]">Smart Failure Detection</p>
-        <h1 className="mt-4 max-w-xl font-display text-4xl font-semibold tracking-tight sm:text-5xl">
+        <div className="mb-6">
+          <Logo size="lg" />
+        </div>
+        <h1 className="max-w-xl font-display text-4xl font-semibold tracking-tight sm:text-5xl">
+
           Keep every decision within reach.
         </h1>
         <p className="mt-5 max-w-lg text-base text-[color:var(--muted-foreground)]">
@@ -79,7 +72,7 @@ function LoginPage() {
         <div className="mt-8 space-y-4 text-sm text-[color:var(--muted-foreground)]">
           <Feature icon={UserRound} text="A personal workspace for every account" />
           <Feature icon={Eye} text="Reopen completed analyses anytime" />
-          <Feature icon={LockKeyhole} text="History protected by row-level access rules" />
+          <Feature icon={LockKeyhole} text="History protected by a local session token" />
         </div>
       </section>
 

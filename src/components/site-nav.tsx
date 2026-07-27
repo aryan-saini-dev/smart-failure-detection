@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, LogOut, ShieldCheck, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
-import smartFailureLogo from "../../Assets/Smart_Logo.png";
+import { Logo } from "@/components/logo";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -12,8 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
 import { clearDemoSession, hasDemoSession } from "@/lib/demo-session";
+import { clearSessionToken, getCurrentUser } from "@/lib/local-api";
 
 const links = [
   { to: "/", label: "Overview" },
@@ -37,67 +37,50 @@ export function SiteNav() {
       else setUser(null);
     }
 
-    void supabase.auth
-      .getUser()
-      .then(({ data }) => {
+    void getCurrentUser()
+      .then(({ user }) => {
         if (!mounted) return;
-        if (!data.user && hasDemoSession()) {
+        if (!user && hasDemoSession()) {
           setUser({ email: "Demo user", initials: "DU", isDemo: true });
           return;
         }
-        if (!data.user) return;
-        const email = data.user.email ?? "";
-        const name = data.user.user_metadata?.full_name ?? data.user.user_metadata?.name ?? email;
+        if (!user) return;
         const initials =
-          name
+          user.name
             .split(/\s+/)
             .filter(Boolean)
             .slice(0, 2)
             .map((part: string) => part[0])
             .join("")
             .toUpperCase() || "SF";
-
         setUser({
-          email,
-          avatarUrl: data.user.user_metadata?.avatar_url,
+          email: user.email,
+          avatarUrl: user.avatarUrl,
           initials,
         });
       })
       .catch(() => undefined);
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted && !session?.user) setUser(null);
-    });
     window.addEventListener("smart-failure-demo-change", syncDemoUser);
 
     return () => {
       mounted = false;
-      listener.subscription.unsubscribe();
       window.removeEventListener("smart-failure-demo-change", syncDemoUser);
     };
   }, []);
 
   async function signOut() {
     if (user?.isDemo) clearDemoSession();
-    else await supabase.auth.signOut();
+    else clearSessionToken();
     setUser(null);
   }
 
   return (
     <header className="sticky top-0 z-40 border-b border-[color:var(--border)] bg-[color:var(--background)]/70 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center gap-5 px-5 py-3 md:px-8">
-        <Link to="/" className="group flex min-w-0 items-center gap-2.5">
-          <span className="flex h-9 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/10 bg-white/90">
-            <img
-              src={smartFailureLogo}
-              alt="Smart Failure Detection"
-              className="h-full w-full scale-[2.2] object-cover object-center"
-            />
-          </span>
-          <span className="truncate font-display text-sm font-semibold tracking-tight sm:text-base">
-            Smart Failure Detection
-          </span>
+        <Link to="/" className="group flex min-w-0 items-center">
+          <Logo size="md" />
         </Link>
+
 
         <nav className="flex items-center gap-1">
           {links.map((link) => {

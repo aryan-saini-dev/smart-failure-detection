@@ -3,8 +3,8 @@ import { ArrowRight, CalendarDays, ClipboardList, Mail, Plus, Sparkles } from "l
 import { useEffect, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { supabase } from "@/integrations/supabase/client";
 import { getDemoProjects, hasDemoSession } from "@/lib/demo-session";
+import { getCurrentUser, listProjects } from "@/lib/local-api";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -48,11 +48,10 @@ function ProfilePage() {
     let active = true;
 
     async function loadProfile() {
-      const { data: userData } = await supabase.auth.getUser();
+      const { user } = await getCurrentUser();
 
       if (!active) return;
 
-      const user = userData.user;
       if (!user) {
         if (hasDemoSession()) {
           setProfile({
@@ -70,7 +69,7 @@ function ProfilePage() {
 
       if (user) {
         const email = user.email ?? "";
-        const name = (user.user_metadata?.full_name ?? user.user_metadata?.name ?? email) || "Workspace member";
+        const name = user.name || email || "Workspace member";
         const initials =
           name
             .split(/\s+/)
@@ -84,19 +83,13 @@ function ProfilePage() {
           name,
           email,
           initials,
-          avatarUrl: user.user_metadata?.avatar_url,
-          createdAt: user.created_at,
+          avatarUrl: user.avatarUrl,
+          createdAt: user.createdAt,
         });
       }
 
-      const { data: projects, error: projectError } = await supabase
-        .from("projects")
-        .select("id, name, industry, business_model, target_market, budget, created_at")
-        .order("created_at", { ascending: false })
-        .limit(8);
-
-      if (projectError) setError(projectError.message);
-      else setHistory(projects ?? []);
+      const { projects } = await listProjects();
+      setHistory(projects.slice(0, 8));
       setLoading(false);
     }
 

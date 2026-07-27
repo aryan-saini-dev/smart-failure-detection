@@ -3,8 +3,8 @@ import { AlertTriangle, ArrowLeft, Building2, DollarSign, Radar, Target, Trendin
 import { useEffect, useMemo, useState } from "react";
 
 import { computeAnalysis, type Project } from "@/lib/analysis";
-import { supabase } from "@/integrations/supabase/client";
 import { getDemoProject, hasDemoSession } from "@/lib/demo-session";
+import { getProject } from "@/lib/local-api";
 
 export const Route = createFileRoute("/projects/$projectId")({ component: SavedAnalysisPage });
 
@@ -22,16 +22,14 @@ function SavedAnalysisPage() {
       setProject(demoProject);
       return () => { active = false; };
     }
-    void supabase
-      .from("projects")
-      .select("name, industry, business_model, target_market, budget, description")
-      .eq("id", projectId)
-      .single()
-      .then(({ data, error: queryError }) => {
-        if (!active) return;
-        if (queryError) setError("This analysis is unavailable. Sign in with the account that created it.");
-        else setProject(data);
-      });
+    void getProject(projectId).then(({ project: record }) => {
+      if (!active) return;
+      if (!record) setError("This analysis is unavailable. Sign in with the account that created it.");
+      else setProject(record);
+    }).catch((queryError) => {
+      if (!active) return;
+      setError(queryError instanceof Error ? queryError.message : "This analysis is unavailable.");
+    });
     return () => { active = false; };
   }, [projectId]);
 

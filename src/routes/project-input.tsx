@@ -29,9 +29,9 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { computeAnalysis, randomDemo, type Project } from "@/lib/analysis";
 import { hasDemoSession, saveDemoProject } from "@/lib/demo-session";
+import { createProject, getCurrentUser } from "@/lib/local-api";
 
 export const Route = createFileRoute("/project-input")({
   head: () => ({
@@ -109,9 +109,9 @@ function ProjectInputPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const { data: userData } = await supabase.auth.getUser();
+    const { user } = await getCurrentUser();
     const isDemo = hasDemoSession();
-    if (!userData.user && !isDemo) {
+    if (!user && !isDemo) {
       setError("Sign in or join as a guest before saving an analysis.");
       return;
     }
@@ -131,26 +131,20 @@ function ProjectInputPage() {
       setTab("overview");
       return;
     }
-    const { data: project, error: err } = await supabase
-      .from("projects")
-      .insert({
+    setSubmitting(false);
+    try {
+      await createProject({
         name: form.name.trim(),
         industry: form.industry.trim(),
         business_model: form.business_model.trim(),
         target_market: form.target_market.trim(),
         budget: form.budget,
         description: form.description.trim(),
-      })
-      .select("id")
-      .single();
-    setSubmitting(false);
-    if (err) {
-      setError(err.message);
-      return;
-    }
-    if (project) {
+      });
       setSaved({ ...form });
       setTab("overview");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Unable to save analysis.");
     }
   }
 
