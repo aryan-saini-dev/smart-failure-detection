@@ -17,6 +17,125 @@ const DATABASE_URL =
 
 const pool = new Pool({ connectionString: DATABASE_URL });
 
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
+
+
+async function analyzeProjectWithGemini(p) {
+  if (!GEMINI_API_KEY) {
+    console.log("⚠️ GEMINI_API_KEY not set. Using rule-based calculation.");
+    return generateFallbackAnalysis(p);
+  }
+
+  try {
+    const promptText = `Act as a top venture capital analyst and competitive intelligence expert. Conduct market and competitor analysis online for this project:
+
+Project Details:
+- Name: ${p.name}
+- Industry: ${p.industry}
+- Business Model: ${p.business_model}
+- Target Market: ${p.target_market}
+- Budget (USD): ${p.budget}
+- Description: ${p.description}
+
+Analyze real market competitors, identify strengths/weaknesses, compute risk factors, dynamic financial revenue/cost projections over 6 months, and market adoption segments.
+
+Respond strictly in JSON matching this JSON schema:
+{
+  "growth": <annual industry growth percentage e.g. 24>,
+  "overallRisk": <risk score 0-100>,
+  "competitors": [
+    {
+      "name": "<Competitor Name>",
+      "strength": "<Key Strength>",
+      "weakness": "<Key Weakness>",
+      "marketShare": <0-100 number>,
+      "overlap": <0-100 number>
+    }
+  ],
+  "risks": [
+    { "category": "Market", "score": <0-100>, "note": "<Diagnostic note>" },
+    { "category": "Capital", "score": <0-100>, "note": "<Diagnostic note>" },
+    { "category": "Execution", "score": <0-100>, "note": "<Diagnostic note>" },
+    { "category": "Competition", "score": <0-100>, "note": "<Diagnostic note>" }
+  ],
+  "projections": [
+    { "month": "M1", "revenue": <number>, "cost": <number> },
+    { "month": "M2", "revenue": <number>, "cost": <number> },
+    { "month": "M3", "revenue": <number>, "cost": <number> },
+    { "month": "M4", "revenue": <number>, "cost": <number> },
+    { "month": "M5", "revenue": <number>, "cost": <number> },
+    { "month": "M6", "revenue": <number>, "cost": <number> }
+  ],
+  "marketSegments": [
+    { "name": "<Segment>", "value": <0-100 number> }
+  ]
+}`;
+
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          generationConfig: { responseMimeType: "application/json" },
+        }),
+      }
+    );
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      console.error("Gemini API HTTP Error:", resp.status, errText);
+      return generateFallbackAnalysis(p);
+    }
+
+    const data = await resp.json();
+    const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (candidateText) {
+      const parsed = JSON.parse(candidateText);
+      if (parsed && parsed.competitors && parsed.risks && parsed.projections) {
+        console.log("✨ Successfully retrieved online market & competitor review from Gemini AI!");
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.error("Gemini analysis failed:", err);
+  }
+
+  return generateFallbackAnalysis(p);
+}
+
+function generateFallbackAnalysis(p) {
+  const budget = Math.max(1000, Number(p.budget) || 0);
+  const growth = 18;
+  const projections = Array.from({ length: 6 }, (_, i) => {
+    const month = i + 1;
+    return {
+      month: `M${month}`,
+      revenue: Math.round(budget * 0.05 * month * (1 + growth / 100)),
+      cost: Math.round((budget / 12) * (0.8 + 0.1 * month)),
+    };
+  });
+  return {
+    growth,
+    overallRisk: 52,
+    competitors: [
+      { name: `${p.industry || "Sector"} Incumbent`, strength: "Scale and distribution", weakness: "Legacy product architecture", marketShare: 35, overlap: 60 },
+      { name: `${p.name.split(" ")[0] || "Market"} Rival`, strength: "Brand presence", weakness: "Slower update cadence", marketShare: 20, overlap: 50 }
+    ],
+    risks: [
+      { category: "Market", score: 45, note: `${p.industry || "Industry"} sector shows projected ${growth}% growth.` },
+      { category: "Capital", score: budget > 50000 ? 40 : 70, note: `Runway derived from budget of $${budget.toLocaleString()}.` },
+      { category: "Execution", score: 50, note: `Based on business model: ${p.business_model || "Subscription"}.` },
+      { category: "Competition", score: 55, note: `Competitive landscape in ${p.industry || "market"}.` }
+    ],
+    marketSegments: [
+      { name: "Early Adopters", value: 35 },
+      { name: "Mainstream", value: 45 },
+      { name: "Late Majority", value: 20 }
+    ]
+  };
+}
 
 async function main() {
   await pool.query(`
@@ -42,8 +161,10 @@ async function main() {
       target_market TEXT NOT NULL,
       budget NUMERIC NOT NULL DEFAULT 0,
       description TEXT NOT NULL,
+      analysis_data JSONB,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    ALTER TABLE projects ADD COLUMN IF NOT EXISTS analysis_data JSONB;
     CREATE INDEX IF NOT EXISTS projects_user_id_created_at_idx ON projects (user_id, created_at DESC);
   `);
 
@@ -93,11 +214,27 @@ async function main() {
         return sendJson(res, 200, { user: user ? formatUser(user) : null });
       }
 
+      if (url.pathname === "/api/analyze" && req.method === "POST") {
+        const { name, industry, business_model, target_market, budget, description } = body;
+        if (!name || !industry) return sendJson(res, 400, { error: "Missing required fields for analysis" });
+        console.log(`🤖 Running Gemini AI online analysis for "${name}"...`);
+        const analysisData = await analyzeProjectWithGemini({
+          name,
+          industry,
+          business_model,
+          target_market,
+          budget,
+          description,
+        });
+        return sendJson(res, 200, { analysis: analysisData });
+      }
+
       if (url.pathname === "/api/projects" && req.method === "GET") {
+
         const user = await requireUser(req, res);
         if (!user) return;
         const result = await pool.query(
-          `SELECT id, name, industry, business_model, target_market, budget, description, created_at, user_id
+          `SELECT id, name, industry, business_model, target_market, budget, description, analysis_data, created_at, user_id
            FROM projects WHERE user_id = $1 ORDER BY created_at DESC`,
           [user.id],
         );
@@ -108,12 +245,26 @@ async function main() {
         const user = await requireUser(req, res);
         if (!user) return;
         const { name, industry, business_model, target_market, budget, description } = body;
+
+        // 1. Analyze online market & competitors with Gemini AI BEFORE database insertion
+        console.log(`🤖 Reviewing project "${name}" online with Gemini AI...`);
+        const analysisData = await analyzeProjectWithGemini({
+          name,
+          industry,
+          business_model,
+          target_market,
+          budget,
+          description,
+        });
+
+        // 2. Save project AND its AI analysis result into Postgres DB
         const result = await pool.query(
-          `INSERT INTO projects (id, user_id, name, industry, business_model, target_market, budget, description)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-           RETURNING id, name, industry, business_model, target_market, budget, description, created_at, user_id`,
-          [randomUUID(), user.id, name, industry, business_model, target_market, budget, description],
+          `INSERT INTO projects (id, user_id, name, industry, business_model, target_market, budget, description, analysis_data)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           RETURNING id, name, industry, business_model, target_market, budget, description, analysis_data, created_at, user_id`,
+          [randomUUID(), user.id, name, industry, business_model, target_market, budget, description, JSON.stringify(analysisData)],
         );
+        console.log(`✅ Saved reviewed project "${name}" to database.`);
         return sendJson(res, 200, { project: result.rows[0] });
       }
 
@@ -122,7 +273,7 @@ async function main() {
         const user = await requireUser(req, res);
         if (!user) return;
         const result = await pool.query(
-          `SELECT id, name, industry, business_model, target_market, budget, description, created_at, user_id
+          `SELECT id, name, industry, business_model, target_market, budget, description, analysis_data, created_at, user_id
            FROM projects WHERE id = $1 AND user_id = $2`,
           [projectMatch[1], user.id],
         );

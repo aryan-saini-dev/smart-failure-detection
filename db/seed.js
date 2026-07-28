@@ -35,9 +35,12 @@ async function seed() {
         target_market TEXT NOT NULL,
         budget NUMERIC NOT NULL DEFAULT 0,
         description TEXT NOT NULL,
+        analysis_data JSONB,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS analysis_data JSONB;
       CREATE INDEX IF NOT EXISTS projects_user_id_created_at_idx ON projects (user_id, created_at DESC);
+
     `);
 
     // 2. Check if demo user already exists

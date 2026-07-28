@@ -86,3 +86,11 @@ export async function createProject(input: Project) {
     body: JSON.stringify(input),
   });
 }
+
+export async function analyzeProject(input: Project) {
+  return request<{ analysis: any }>("/api/analyze", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
