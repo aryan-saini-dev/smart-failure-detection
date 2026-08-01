@@ -17,8 +17,7 @@ WORKDIR /app
 
 # Install Python dependencies
 COPY requirements.txt .
-# using --break-system-packages because Ubuntu 22.04 enforces PEP 668, but we are in an isolated container
-RUN pip3 install --no-cache-dir -r requirements.txt --break-system-packages
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Install Node.js dependencies
 COPY package*.json ./

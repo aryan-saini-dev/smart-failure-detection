@@ -60,6 +60,16 @@ import {
 import Aurora from "@/components/Aurora";
 
 export const Route = createFileRoute("/project-input")({
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      name: (search.name as string) || "",
+      industry: (search.industry as string) || "",
+      business_model: (search.business_model as string) || "",
+      target_market: (search.target_market as string) || "",
+      budget: Number(search.budget) || 0,
+      description: (search.description as string) || "",
+    };
+  },
   head: () => ({
     meta: [
       { title: "Project Input — Smart Failure Detection" },
@@ -118,7 +128,16 @@ const empty: FormState = {
 
 
 function ProjectInputPage() {
-  const [form, setForm] = useState<FormState>(empty);
+  const searchParams = Route.useSearch();
+  const [form, setForm] = useState<FormState>({
+    ...empty,
+    name: searchParams.name || "",
+    industry: searchParams.industry || "",
+    business_model: searchParams.business_model || "",
+    target_market: searchParams.target_market || "",
+    budget: searchParams.budget || 0,
+    description: searchParams.description || "",
+  });
   const [submitting, setSubmitting] = useState(false);
   const [runningAnalysis, setRunningAnalysis] = useState(false);
   const [error, setError] = useState<string | null>(null);

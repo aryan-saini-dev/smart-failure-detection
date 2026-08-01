@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertTriangle, ArrowLeft, Building2, DollarSign, Radar, Target, TrendingUp, Users } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Building2, CopyPlus, DollarSign, Radar, Target, TrendingUp, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { computeAnalysis, type Project } from "@/lib/analysis";
@@ -37,7 +37,10 @@ function SavedAnalysisPage() {
   if (!project || !analysis) return <main className="mx-auto max-w-6xl px-6 py-16"><div className="glass-card h-72 animate-pulse" /></main>;
 
   return <main className="mx-auto max-w-6xl px-6 py-12 md:px-8 md:py-16">
-    <Link to="/profile" className="inline-flex items-center gap-2 text-sm text-[color:var(--muted-foreground)] transition-colors hover:text-[color:var(--foreground)]"><ArrowLeft className="h-4 w-4" />Back to history</Link>
+    <div className="flex items-center justify-between">
+      <Link to="/profile" className="inline-flex items-center gap-2 text-sm text-[color:var(--muted-foreground)] transition-colors hover:text-[color:var(--foreground)]"><ArrowLeft className="h-4 w-4" />Back to history</Link>
+      <Link to="/project-input" search={{ name: project.name, industry: project.industry, business_model: project.business_model, target_market: project.target_market, budget: project.budget, description: project.description }} className="inline-flex items-center gap-2 rounded-md bg-white/5 px-3 py-1.5 text-sm font-medium text-[color:var(--foreground)] transition-colors hover:bg-white/10"><CopyPlus className="h-4 w-4" />Duplicate & Edit</Link>
+    </div>
     <section className="glass-card mt-5 p-6 md:p-8">
       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[color:var(--accent)]">Saved analysis</p>
       <div className="mt-3 flex flex-wrap items-end justify-between gap-4"><div><h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">{project.name}</h1><p className="mt-2 text-sm text-[color:var(--muted-foreground)]">{project.industry} / {project.business_model || "Business model not set"}</p></div><div className="flex gap-5 text-sm"><Metric label="Growth" value={`${analysis.growth}%`} /><Metric label="Risk" value={`${analysis.overallRisk}/100`} /><Metric label="Budget" value={`$${project.budget.toLocaleString()}`} /></div></div>

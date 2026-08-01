@@ -1,11 +1,9 @@
 import http from "node:http";
-import { randomBytes, randomUUID } from "node:crypto";
-import { Pool } from "pg";
-import bcrypt from "bcryptjs";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import process from "node:process";
+import { createClient } from "@supabase/supabase-js";
 
 const execAsync = promisify(exec);
 
@@ -16,13 +14,11 @@ try {
 }
 
 const PORT = Number(process.env.API_PORT || 8787);
-const DATABASE_URL =
-  process.env.DATABASE_URL || "postgres://smart_failure:smart_failure@localhost:5432/smart_failure";
-
-const pool = new Pool({ connectionString: DATABASE_URL });
-
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || "";
 
+const supabaseBase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function analyzeProjectWithGemini(p) {
   if (!GEMINI_API_KEY) {
@@ -118,7 +114,6 @@ Respond strictly in JSON matching this JSON schema (do not include markdown bloc
             const pythonPath = process.env.PYTHON_PATH || path.resolve(process.cwd(), "Dataset/venv/Scripts/python.exe");
             const scriptPath = path.resolve(process.cwd(), "server/ml/predict.py");
             
-            // On Windows, carefully escape the JSON string argument for powershell/cmd
             const arg = JSON.stringify(parsed.mlFeatures).replace(/"/g, '\\"');
             const { stdout } = await execAsync(`"${pythonPath}" "${scriptPath}" "${arg}"`);
             
@@ -126,7 +121,6 @@ Respond strictly in JSON matching this JSON schema (do not include markdown bloc
             if (!mlResult.error) {
               console.log("✅ ML Prediction Result:", mlResult);
               parsed.mlPrediction = mlResult;
-              // Adjust overall risk based on ML failure probability if we want
               parsed.overallRisk = Math.round((parsed.overallRisk + mlResult.failureProbability) / 2);
             } else {
               console.error("❌ ML Prediction Error inside python script:", mlResult.error);
@@ -179,36 +173,6 @@ function generateFallbackAnalysis(p) {
 }
 
 async function main() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id UUID PRIMARY KEY,
-      email TEXT NOT NULL UNIQUE,
-      name TEXT NOT NULL,
-      password_hash TEXT NOT NULL,
-      avatar_url TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-    CREATE TABLE IF NOT EXISTS sessions (
-      token TEXT PRIMARY KEY,
-      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-    CREATE TABLE IF NOT EXISTS projects (
-      id UUID PRIMARY KEY,
-      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      name TEXT NOT NULL,
-      industry TEXT NOT NULL,
-      business_model TEXT NOT NULL,
-      target_market TEXT NOT NULL,
-      budget NUMERIC NOT NULL DEFAULT 0,
-      description TEXT NOT NULL,
-      analysis_data JSONB,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-    ALTER TABLE projects ADD COLUMN IF NOT EXISTS analysis_data JSONB;
-    CREATE INDEX IF NOT EXISTS projects_user_id_created_at_idx ON projects (user_id, created_at DESC);
-  `);
-
   const server = http.createServer(async (req, res) => {
     setCorsHeaders(res);
 
@@ -219,41 +183,8 @@ async function main() {
     }
 
     try {
-
       const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
       const body = await readJson(req);
-
-      if (url.pathname === "/api/auth/register" && req.method === "POST") {
-        const { name, email, password } = body;
-        if (!name || !email || !password) return sendJson(res, 400, { error: "Missing name, email, or password" });
-        const passwordHash = await bcrypt.hash(password, 10);
-        const userId = randomUUID();
-        const token = randomBytes(32).toString("hex");
-        const user = await pool.query(
-          `INSERT INTO users (id, email, name, password_hash) VALUES ($1, $2, $3, $4)
-           RETURNING id, email, name, avatar_url, created_at`,
-          [userId, email.toLowerCase(), name, passwordHash],
-        );
-        await pool.query(`INSERT INTO sessions (token, user_id) VALUES ($1, $2)`, [token, userId]);
-        return sendJson(res, 200, { token, user: formatUser(user.rows[0]) });
-      }
-
-      if (url.pathname === "/api/auth/login" && req.method === "POST") {
-        const { email, password } = body;
-        const result = await pool.query(`SELECT * FROM users WHERE email = $1`, [String(email || "").toLowerCase()]);
-        const user = result.rows[0];
-        if (!user || !(await bcrypt.compare(password || "", user.password_hash))) {
-          return sendJson(res, 401, { error: "Invalid email or password" });
-        }
-        const token = randomBytes(32).toString("hex");
-        await pool.query(`INSERT INTO sessions (token, user_id) VALUES ($1, $2)`, [token, user.id]);
-        return sendJson(res, 200, { token, user: formatUser(user) });
-      }
-
-      if (url.pathname === "/api/auth/me" && req.method === "GET") {
-        const user = await getUserFromRequest(req);
-        return sendJson(res, 200, { user: user ? formatUser(user) : null });
-      }
 
       if (url.pathname === "/api/analyze" && req.method === "POST") {
         const { name, industry, business_model, target_market, budget, description } = body;
@@ -270,24 +201,11 @@ async function main() {
         return sendJson(res, 200, { analysis: analysisData });
       }
 
-      if (url.pathname === "/api/projects" && req.method === "GET") {
-
-        const user = await requireUser(req, res);
-        if (!user) return;
-        const result = await pool.query(
-          `SELECT id, name, industry, business_model, target_market, budget, description, analysis_data, created_at, user_id
-           FROM projects WHERE user_id = $1 ORDER BY created_at DESC`,
-          [user.id],
-        );
-        return sendJson(res, 200, { projects: result.rows });
-      }
-
       if (url.pathname === "/api/projects" && req.method === "POST") {
         const user = await requireUser(req, res);
         if (!user) return;
         const { name, industry, business_model, target_market, budget, description } = body;
 
-        // 1. Analyze online market & competitors with Gemini AI BEFORE database insertion
         console.log(`🤖 Reviewing project "${name}" online with Gemini AI...`);
         const analysisData = await analyzeProjectWithGemini({
           name,
@@ -298,27 +216,27 @@ async function main() {
           description,
         });
 
-        // 2. Save project AND its AI analysis result into Postgres DB
-        const result = await pool.query(
-          `INSERT INTO projects (id, user_id, name, industry, business_model, target_market, budget, description, analysis_data)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-           RETURNING id, name, industry, business_model, target_market, budget, description, analysis_data, created_at, user_id`,
-          [randomUUID(), user.id, name, industry, business_model, target_market, budget, description, JSON.stringify(analysisData)],
-        );
-        console.log(`✅ Saved reviewed project "${name}" to database.`);
-        return sendJson(res, 200, { project: result.rows[0] });
-      }
+        // Save project AND its AI analysis result into Supabase
+        const token = req.headers["x-supabase-token"];
+        const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          global: { headers: { Authorization: `Bearer ${token}` } }
+        });
 
-      const projectMatch = url.pathname.match(/^\/api\/projects\/([^/]+)$/);
-      if (projectMatch && req.method === "GET") {
-        const user = await requireUser(req, res);
-        if (!user) return;
-        const result = await pool.query(
-          `SELECT id, name, industry, business_model, target_market, budget, description, analysis_data, created_at, user_id
-           FROM projects WHERE id = $1 AND user_id = $2`,
-          [projectMatch[1], user.id],
-        );
-        return sendJson(res, 200, { project: result.rows[0] || null });
+        const { data, error } = await userClient.from("projects").insert({
+          user_id: user.id,
+          name,
+          industry,
+          business_model,
+          target_market,
+          budget: Number(budget) || 0,
+          description,
+          analysis_data: analysisData
+        }).select().single();
+
+        if (error) throw new Error(error.message);
+
+        console.log(`✅ Saved reviewed project "${name}" to Supabase.`);
+        return sendJson(res, 200, { project: data });
       }
 
       return sendJson(res, 404, { error: "Not found" });
@@ -348,13 +266,11 @@ function sendJson(res, statusCode, payload) {
 }
 
 async function getUserFromRequest(req) {
-  const token = req.headers["x-session-token"];
+  const token = req.headers["x-supabase-token"];
   if (!token || Array.isArray(token)) return null;
-  const session = await pool.query(`SELECT user_id FROM sessions WHERE token = $1`, [token]);
-  const userId = session.rows[0]?.user_id;
-  if (!userId) return null;
-  const result = await pool.query(`SELECT id, email, name, avatar_url, created_at FROM users WHERE id = $1`, [userId]);
-  return result.rows[0] || null;
+  const { data: { user }, error } = await supabaseBase.auth.getUser(token);
+  if (error || !user) return null;
+  return user;
 }
 
 async function requireUser(req, res) {
@@ -366,21 +282,10 @@ async function requireUser(req, res) {
   return user;
 }
 
-function formatUser(user) {
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    avatarUrl: user.avatar_url ?? undefined,
-    createdAt: user.created_at,
-  };
-}
-
 function setCorsHeaders(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-session-token");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-supabase-token");
 }
 
 await main();
-

@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Eye, LockKeyhole, Mail, Sparkles, UserRound } from "lucide-react";
 import { useState } from "react";
 
-import { clearSessionToken, loginUser, registerUser, setSessionToken } from "@/lib/local-api";
+import { clearSessionToken, loginUser, registerUser } from "@/lib/local-api";
 import { startDemoSession } from "@/lib/demo-session";
 import { Logo } from "@/components/logo";
 
@@ -38,7 +38,7 @@ function LoginPage() {
         mode === "sign-in"
           ? await loginUser({ email, password })
           : await registerUser({ name: name.trim(), email, password });
-      setSessionToken(result.token);
+      // Supabase handles session storage internally
       setSubmitting(false);
       void navigate({ to: "/profile" });
       return;

@@ -1,7 +1,11 @@
+import { createClient } from "@supabase/supabase-js";
 import type { Project } from "@/lib/analysis";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
-const SESSION_KEY = "smart-failure-session-token";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export type LocalUser = {
   id: string;
@@ -17,86 +21,138 @@ export type ProjectRecord = Project & {
   user_id: string;
 };
 
-type ApiError = {
-  error: string;
-};
-
-export function getSessionToken() {
-  return typeof window === "undefined" ? null : localStorage.getItem(SESSION_KEY);
-}
-
-export function setSessionToken(token: string) {
-  localStorage.setItem(SESSION_KEY, token);
+// Listen to Supabase Auth state changes to dispatch our custom event
+supabase.auth.onAuthStateChange(() => {
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event("smart-failure-auth-change"));
   }
-}
-
-export function clearSessionToken() {
-  localStorage.removeItem(SESSION_KEY);
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event("smart-failure-auth-change"));
-  }
-}
-
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers = new Headers(init?.headers);
-  headers.set("content-type", "application/json");
-  const token = getSessionToken();
-  if (token) headers.set("x-session-token", token);
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers,
-  });
-
-  const text = await response.text();
-  const payload = text ? (JSON.parse(text) as T | ApiError) : ({} as T);
-  if (!response.ok) {
-    const error = payload as ApiError;
-    throw new Error(error.error || `Request failed with status ${response.status}`);
-  }
-
-  return payload as T;
-}
+});
 
 export async function registerUser(input: { name: string; email: string; password: string }) {
-  return request<{ token: string; user: LocalUser }>("/api/auth/register", {
-    method: "POST",
-    body: JSON.stringify(input),
+  const { data, error } = await supabase.auth.signUp({
+    email: input.email,
+    password: input.password,
+    options: {
+      data: {
+        name: input.name,
+      },
+    },
   });
+
+  if (error) throw new Error(error.message);
+  if (!data.user) throw new Error("User creation failed");
+
+  return {
+    token: data.session?.access_token ?? "",
+    user: {
+      id: data.user.id,
+      email: data.user.email!,
+      name: data.user.user_metadata.name || input.name,
+      createdAt: data.user.created_at,
+    } as LocalUser,
+  };
 }
 
 export async function loginUser(input: { email: string; password: string }) {
-  return request<{ token: string; user: LocalUser }>("/api/auth/login", {
-    method: "POST",
-    body: JSON.stringify(input),
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: input.email,
+    password: input.password,
   });
+
+  if (error) throw new Error(error.message);
+  if (!data.user) throw new Error("Login failed");
+
+  return {
+    token: data.session?.access_token ?? "",
+    user: {
+      id: data.user.id,
+      email: data.user.email!,
+      name: data.user.user_metadata.name || input.email,
+      createdAt: data.user.created_at,
+    } as LocalUser,
+  };
 }
 
 export async function getCurrentUser() {
-  return request<{ user: LocalUser | null }>("/api/auth/me");
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) return { user: null };
+
+  return {
+    user: {
+      id: user.id,
+      email: user.email!,
+      name: user.user_metadata.name || user.email!,
+      createdAt: user.created_at,
+    } as LocalUser,
+  };
+}
+
+export async function clearSessionToken() {
+  await supabase.auth.signOut();
 }
 
 export async function listProjects() {
-  return request<{ projects: ProjectRecord[] }>("/api/projects");
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return { projects: data as ProjectRecord[] };
 }
 
 export async function getProject(projectId: string) {
-  return request<{ project: ProjectRecord | null }>(`/api/projects/${projectId}`);
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", projectId)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return { project: data as ProjectRecord };
 }
 
+// These two functions still call our Node backend because they must run the Python ML Model
 export async function createProject(input: Project) {
-  return request<{ project: ProjectRecord }>("/api/projects", {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  
+  const response = await fetch(`${API_BASE_URL}/api/projects`, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "x-supabase-token": token } : {}),
+    },
     body: JSON.stringify(input),
   });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: "Failed to create project" }));
+    throw new Error(err.error || "Failed to create project");
+  }
+
+  return response.json();
 }
 
 export async function analyzeProject(input: Project) {
-  return request<{ analysis: any }>("/api/analyze", {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+
+  const response = await fetch(`${API_BASE_URL}/api/analyze`, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "x-supabase-token": token } : {}),
+    },
     body: JSON.stringify(input),
   });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: "Analysis failed" }));
+    throw new Error(err.error || "Analysis failed");
+  }
+
+  return response.json();
 }
+
 
