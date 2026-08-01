@@ -43,7 +43,7 @@ const features = [
 
 function Index() {
   return (
-    <main className="relative min-h-[calc(100vh-64px)] w-full overflow-hidden">
+    <main className="relative h-[calc(100vh-65px)] w-full overflow-hidden flex flex-col">
       {/* Interactive Background */}
       <div className="fixed inset-0 z-0">
         <Aurora
@@ -57,41 +57,55 @@ function Index() {
       </div>
 
       {/* Main Content */}
-      <section className="relative z-10 mx-auto max-w-5xl px-6 py-24 md:px-10 md:py-32 lg:py-40 text-center flex flex-col items-center">
-        <h1 className="mt-8 max-w-4xl font-display text-5xl font-medium tracking-tight sm:text-6xl lg:text-7xl leading-tight">
-          A quiet room for <span className="italic text-[color:var(--foreground)]">loud ideas.</span>
-        </h1>
-        <p className="mt-8 max-w-2xl text-lg text-[color:var(--muted-foreground)] font-sans font-medium">
-          Quantify market friction, competitor overlap, and execution risk before you commit capital. A purely analytical workspace for founders.
-        </p>
-        <div className="mt-12 flex flex-wrap justify-center gap-4">
-          <Link
-            to="/project-input"
-            className="group inline-flex items-center gap-2 rounded-full bg-[color:var(--foreground)] px-8 py-3.5 text-sm font-semibold text-[color:var(--background)] transition-all duration-200 hover:scale-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
-          >
-            Evaluate a startup
-            <ArrowRight
-              className="h-4 w-4 transition-transform group-hover:translate-x-1"
-              strokeWidth={2}
+      <section className="relative z-10 mx-auto max-w-5xl w-full h-full px-6 py-4 sm:py-6 md:py-8 text-center flex flex-col justify-between items-center">
+        {/* Hero Top Section */}
+        <div className="flex flex-col items-center my-auto">
+          {/* Prominent Hero Logo */}
+          <div className="relative mb-3 sm:mb-4 flex items-center justify-center">
+            <div className="absolute inset-0 -z-10 rounded-full bg-amber-500/15 blur-2xl scale-125" />
+            <img
+              src="/smart-logo-white.png"
+              alt="Smart Failure Detection Logo"
+              className="h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 object-contain drop-shadow-[0_0_25px_rgba(245,158,11,0.35)] transition-transform duration-300 hover:scale-105 select-none pointer-events-none"
             />
-          </Link>
-          <Link
-            to="/project-input"
-            className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-transparent px-8 py-3.5 text-sm font-medium text-[color:var(--foreground)] transition-colors hover:bg-white/5 active:scale-[0.98]"
-          >
-            See how it works
-          </Link>
+          </div>
+
+          <h1 className="max-w-4xl font-display text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight leading-tight">
+            A quiet room for <span className="italic text-[color:var(--foreground)]">loud ideas.</span>
+          </h1>
+          <p className="mt-3 sm:mt-4 max-w-2xl text-sm sm:text-base text-[color:var(--muted-foreground)] font-sans font-normal leading-relaxed">
+            Quantify market friction, competitor overlap, and execution risk before you commit capital. A purely analytical workspace for founders.
+          </p>
+          <div className="mt-5 sm:mt-6 flex flex-wrap justify-center gap-3.5">
+            <Link
+              to="/project-input"
+              className="group inline-flex items-center gap-2 rounded-full bg-[color:var(--foreground)] px-7 py-3 text-sm font-semibold text-[color:var(--background)] transition-all duration-200 hover:scale-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+            >
+              Evaluate a startup
+              <ArrowRight
+                className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                strokeWidth={2}
+              />
+            </Link>
+            <Link
+              to="/project-input"
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-transparent px-7 py-3 text-sm font-medium text-[color:var(--foreground)] transition-colors hover:bg-white/5 active:scale-[0.98]"
+            >
+              See how it works
+            </Link>
+          </div>
         </div>
 
-        <div className="mt-24 grid gap-8 md:grid-cols-3 text-left">
+        {/* Feature Cards Bottom Row */}
+        <div className="w-full grid gap-4 sm:gap-6 md:grid-cols-3 text-left pt-3 sm:pt-4 border-t border-white/10">
           {features.map((f) => (
             <div
               key={f.title}
-              className="p-6 transition-all duration-300 border-l border-white/10 hover:border-white/30"
+              className="p-3.5 sm:p-4 transition-all duration-300 border-l border-white/10 hover:border-white/30"
             >
-              <f.icon className="h-5 w-5 text-[color:var(--foreground)] opacity-70" strokeWidth={1.5} />
-              <h3 className="mt-5 font-display text-xl font-medium tracking-wide">{f.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-[color:var(--muted-foreground)]">{f.body}</p>
+              <f.icon className="h-4 w-4 text-[color:var(--foreground)] opacity-70" strokeWidth={1.5} />
+              <h3 className="mt-2.5 font-display text-base sm:text-lg font-medium tracking-wide">{f.title}</h3>
+              <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-[color:var(--muted-foreground)]">{f.body}</p>
             </div>
           ))}
         </div>
