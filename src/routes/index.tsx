@@ -28,28 +28,22 @@ const features = [
     icon: TrendingUp,
     title: "Revenue projections",
     body: "Rule-based forecasts calibrated against your budget, sector, and target market.",
-    badgeClass: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)] group-hover:border-emerald-400/50 group-hover:bg-emerald-500/20",
-    glowClass: "from-emerald-400/40",
   },
   {
     icon: Target,
     title: "Competitor radar",
     body: "See who you're up against, where they're strong, and where the seams are open.",
-    badgeClass: "border-amber-500/30 bg-amber-500/10 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.15)] group-hover:border-amber-400/50 group-hover:bg-amber-500/20",
-    glowClass: "from-amber-400/40",
   },
   {
     icon: ShieldCheck,
     title: "Risk analysis",
     body: "Signals across market, execution, and capital risk — surfaced before you burn runway.",
-    badgeClass: "border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.15)] group-hover:border-orange-400/50 group-hover:bg-orange-500/20",
-    glowClass: "from-orange-400/40",
   },
 ];
 
 function Index() {
   return (
-    <main className="relative h-[calc(100vh-65px)] w-full overflow-hidden flex flex-col">
+    <main className="relative min-h-[calc(100vh-64px)] w-full flex flex-col">
       {/* Interactive Background */}
       <div className="fixed inset-0 z-0">
         <Aurora
@@ -63,7 +57,7 @@ function Index() {
       </div>
 
       {/* Main Content */}
-      <section className="relative z-10 mx-auto max-w-5xl w-full h-full px-6 py-4 sm:py-6 md:py-8 text-center flex flex-col justify-between items-center">
+      <section className="relative z-10 mx-auto max-w-5xl w-full flex-1 px-6 py-8 sm:py-12 md:py-16 text-center flex flex-col justify-between items-center">
         {/* Hero Top Section */}
         <div className="flex flex-col items-center my-auto">
           {/* Prominent Hero Logo */}
@@ -102,30 +96,18 @@ function Index() {
           </div>
         </div>
 
-        {/* Feature Cards Bottom Row */}
-        <div className="w-full grid gap-3 sm:gap-4 md:grid-cols-3 text-left">
+        {/* Feature Columns Bottom Row */}
+        <div className="w-full grid gap-0 md:grid-cols-3 text-left">
           {features.map((f) => (
             <div
               key={f.title}
-              className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/[0.06] hover:shadow-[0_0_25px_rgba(0,0,0,0.3)]"
+              className="p-3.5 sm:p-4 md:p-5 transition-all duration-300 border-l border-white/10 md:last:border-r md:last:border-white/10 hover:border-white/30"
             >
-              {/* Subtle top ambient gradient sheen */}
-              <div
-                className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent ${f.glowClass} to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
-              />
-              
-              <div className="flex items-center gap-3">
-                <div
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-all duration-300 group-hover:scale-110 ${f.badgeClass}`}
-                >
-                  <f.icon className="h-4.5 w-4.5" strokeWidth={2} />
-                </div>
-                <h3 className="font-display text-sm sm:text-base font-semibold tracking-tight text-[color:var(--foreground)]">
-                  {f.title}
-                </h3>
-              </div>
-
-              <p className="mt-2 text-xs leading-relaxed text-[color:var(--muted-foreground)]">
+              <f.icon className="h-4.5 w-4.5 text-[color:var(--foreground)] opacity-75" strokeWidth={1.5} />
+              <h3 className="mt-2.5 font-display text-base sm:text-lg font-medium tracking-wide text-[color:var(--foreground)]">
+                {f.title}
+              </h3>
+              <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-[color:var(--muted-foreground)]">
                 {f.body}
               </p>
             </div>
