@@ -35,11 +35,48 @@ We built a holistic evaluation platform that democratizes venture-grade due dili
 - **History & Versioning**: Secure authentication and project saving via Supabase allows for iterative scenario testing (e.g., "What if I pivot to a subscription model?").
 
 ### Architecture Stack
-- **Frontend**: React 19, TanStack Router, Tailwind CSS, Recharts, Radix UI.
-- **Backend API**: Node.js custom HTTP server to proxy secure requests and manage child processes.
-- **Machine Learning Engine**: Python, XGBoost, Pandas. The model (`server/ml/predict.py`) executes locally via a Node `child_process`.
+- **Frontend**: React 19, TanStack Router, Tailwind CSS, Recharts, Radix UI (Hosted on Vercel).
+- **Backend API**: Node.js custom HTTP server to proxy requests and execute ML child processes (Hosted on Render).
+- **Machine Learning Engine**: Python, XGBoost, Scikit-learn, Pandas. The model (`server/ml/predict.py`) executes via `child_process.execFile`.
 - **Database & Authentication**: Supabase (managed PostgreSQL cloud) with Row-Level Security (RLS).
 - **Generative AI**: Google Gemini 2.5 Flash API.
+
+### 🏛️ System Architecture Flow
+
+```mermaid
+flowchart TB
+    subgraph Client["🖥️ Frontend Layer (Vercel / Local)"]
+        UI["React 19 + TanStack Router"]
+        Visuals["Interactive Recharts & UI Dashboard"]
+        ClientAuth["Supabase Client Auth (Session / JWT)"]
+    end
+
+    subgraph Backend["⚙️ Backend & Inference Engine (Render / Docker)"]
+        NodeAPI["Node.js API Server (Port 8787)"]
+        ExecEngine["Python Execution Runtime (execFile)"]
+        MLModel["ML Model (startup_model_optimized.joblib)\nHistorical Crunchbase Dataset"]
+    end
+
+    subgraph External["☁️ Cloud Services & Intelligence"]
+        Gemini["Google Gemini 2.5 Flash API\n(Market Research & Feature Extraction)"]
+        SupabaseDB[("Supabase PostgreSQL DB\n(Projects Table + Row Level Security)")]
+    end
+
+    %% Client Interactions
+    UI -->|"1. Submit Startup Idea (POST /api/analyze)"| NodeAPI
+    UI <-->|"Save / Fetch Projects (Direct & Proxied)"| SupabaseDB
+    ClientAuth -->|"Auth State & RLS Tokens"| UI
+
+    %% Backend AI / ML Pipeline
+    NodeAPI -->|"2. Prompt for Market Research & ML Features"| Gemini
+    Gemini -->|"3. Competitive Intelligence + 7 Numerical Features"| NodeAPI
+    NodeAPI -->|"4. Execute predict.py (features payload)"| ExecEngine
+    ExecEngine -->|"5. Run Inference"| MLModel
+    MLModel -->|"6. Failure / Success Probability Score"| ExecEngine
+    ExecEngine -->|"7. Return ML Result"| NodeAPI
+    NodeAPI -->|"8. Complete Intelligence Report"| UI
+    UI -->|"9. Render Visual Breakdown & Quantitative Verdict"| Visuals
+```
 
 ---
 
