@@ -21,7 +21,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Install Node.js dependencies
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Copy the rest of the application code
 COPY . .
