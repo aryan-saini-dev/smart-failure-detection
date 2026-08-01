@@ -197,7 +197,11 @@ function ProjectInputPage() {
         setMobileView("analysis");
       }
     } catch (err) {
-      console.warn("Manual AI analysis error:", err);
+      console.warn("AI analysis network issue, using local computation:", err);
+      const fallback = computeAnalysis(form);
+      setLiveAnalysis(fallback);
+      setAnalyzedForm(form);
+      setMobileView("analysis");
     } finally {
       setRunningAnalysis(false);
       setIsAiSearching(false);

@@ -81,59 +81,73 @@ Respond strictly in JSON matching this JSON schema (do not include markdown bloc
   }
 }`;
 
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }],
-          generationConfig: { responseMimeType: "application/json" },
-        }),
-      }
-    );
+    const modelsToTry = [
+      "gemini-flash-latest",
+      "gemini-3.5-flash",
+      "gemini-flash-lite-latest",
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+    ];
 
-    if (!resp.ok) {
-      const errText = await resp.text();
-      console.error("Gemini API HTTP Error:", resp.status, errText);
-      return generateFallbackAnalysis(p);
-    }
+    for (const model of modelsToTry) {
+      try {
+        const resp = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: promptText }] }],
+              generationConfig: { responseMimeType: "application/json" },
+            }),
+          }
+        );
 
-    const data = await resp.json();
-    let candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (candidateText) {
-      candidateText = candidateText.replace(/```json/gi, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(candidateText);
-      if (parsed && parsed.competitors && parsed.risks && parsed.projections) {
-        console.log("✨ Successfully retrieved online market & competitor review from Gemini AI!");
-        
-        // ML Model Integration
-        if (parsed.mlFeatures) {
-          console.log("🧠 Sending Gemini features to local ML pipeline...");
-          try {
-            const pythonPath = process.env.PYTHON_PATH || path.resolve(process.cwd(), "Dataset/venv/Scripts/python.exe");
-            const scriptPath = path.resolve(process.cwd(), "server/ml/predict.py");
+        if (!resp.ok) {
+          const errText = await resp.text();
+          console.warn(`Gemini model ${model} HTTP Error ${resp.status}:`, errText.slice(0, 150));
+          continue;
+        }
+
+        const data = await resp.json();
+        let candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (candidateText) {
+          candidateText = candidateText.replace(/```json/gi, "").replace(/```/g, "").trim();
+          const parsed = JSON.parse(candidateText);
+          if (parsed && parsed.competitors && parsed.risks && parsed.projections) {
+            console.log(`✨ Successfully retrieved online market & competitor review from Gemini AI (${model})!`);
             
-            const { stdout } = await execFileAsync(pythonPath, [scriptPath, JSON.stringify(parsed.mlFeatures)]);
-            
-            const mlResult = JSON.parse(stdout);
-            if (!mlResult.error) {
-              console.log("✅ ML Prediction Result:", mlResult);
-              parsed.mlPrediction = mlResult;
-              parsed.overallRisk = Math.round((parsed.overallRisk + mlResult.failureProbability) / 2);
-            } else {
-              console.error("❌ ML Prediction Error inside python script:", mlResult.error);
+            // ML Model Integration
+            if (parsed.mlFeatures) {
+              console.log("🧠 Sending Gemini features to local ML pipeline...");
+              try {
+                const pythonPath = process.env.PYTHON_PATH || path.resolve(process.cwd(), "Dataset/venv/Scripts/python.exe");
+                const scriptPath = path.resolve(process.cwd(), "server/ml/predict.py");
+                
+                const { stdout } = await execFileAsync(pythonPath, [scriptPath, JSON.stringify(parsed.mlFeatures)]);
+                
+                const mlResult = JSON.parse(stdout);
+                if (!mlResult.error) {
+                  console.log("✅ ML Prediction Result:", mlResult);
+                  parsed.mlPrediction = mlResult;
+                  parsed.overallRisk = Math.round((parsed.overallRisk + mlResult.failureProbability) / 2);
+                } else {
+                  console.error("❌ ML Prediction Error inside python script:", mlResult.error);
+                }
+              } catch (mlErr) {
+                console.error("❌ Failed to execute ML script:", mlErr.message);
+              }
             }
-          } catch (mlErr) {
-            console.error("❌ Failed to execute ML script:", mlErr);
+            
+            return parsed;
           }
         }
-        
-        return parsed;
+      } catch (modelErr) {
+        console.warn(`Gemini attempt with ${model} failed:`, modelErr.message);
       }
     }
   } catch (err) {
-    console.error("Gemini analysis failed:", err);
+    console.error("Gemini analysis overall failed:", err);
   }
 
   return generateFallbackAnalysis(p);
