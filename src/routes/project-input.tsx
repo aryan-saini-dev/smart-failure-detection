@@ -512,128 +512,100 @@ function ProjectInputPage() {
                 const isSuccess = mlVerdict.prediction === "Success";
 
                 return (
-                  <div className="space-y-6">
-                    {/* Primary ML Verdict & Statistical Meter Banner */}
-                    <div className={`glass-card p-5 border transition-all duration-300 ${
-                      isSuccess 
-                        ? "border-emerald-500/30 bg-emerald-950/20 shadow-[0_0_25px_rgba(16,185,129,0.12)]" 
-                        : "border-red-500/30 bg-red-950/20 shadow-[0_0_25px_rgba(239,68,68,0.12)]"
-                    }`}>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-start sm:items-center gap-3.5">
-                          <div className={`p-3 rounded-xl border shrink-0 ${
-                            isSuccess 
-                              ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" 
-                              : "bg-red-500/15 text-red-400 border-red-500/30"
-                          }`}>
-                            <Cpu className="h-6 w-6" />
-                          </div>
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-mono text-xs uppercase tracking-wider text-[color:var(--muted-foreground)]">
-                                ML Prediction Engine
-                              </span>
-                              <span className={`rounded px-2.5 py-0.5 font-mono text-xs font-bold uppercase tracking-wider ${
-                                isSuccess 
-                                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" 
-                                  : "bg-red-500/20 text-red-300 border border-red-500/30"
-                              }`}>
-                                Verdict: {mlVerdict.prediction} ({isSuccess ? "Viable Venture" : "High Failure Risk"})
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {/* 6-Month Revenue Projection */}
+                    <ChartCard title="6-month revenue projection" icon={TrendingUp}>
+                      <ResponsiveContainer width="100%" height={235}>
+                        <LineChart data={activeAnalysis.projections}>
+                          <CartesianGrid stroke="rgba(255,255,255,0.05)" />
+                          <XAxis dataKey="month" stroke="#71717A" fontSize={11} />
+                          <YAxis stroke="#71717A" fontSize={11} />
+                          <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
+                          <Line
+                            type="monotone"
+                            dataKey="revenue"
+                            stroke="#F59E0B"
+                            strokeWidth={2}
+                            dot={{ r: 3, fill: "#F59E0B" }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="cost"
+                            stroke="#71717A"
+                            strokeWidth={1.5}
+                            strokeDasharray="4 4"
+                            dot={false}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </ChartCard>
+
+                    {/* Risk Profile & Integrated ML Prediction */}
+                    <ChartCard title="Risk profile & ML verdict" icon={AlertTriangle}>
+                      <div className="flex flex-col justify-between h-[235px]">
+                        <div>
+                          <ResponsiveContainer width="100%" height={120}>
+                            <BarChart data={activeAnalysis.risks} layout="vertical" margin={{ top: 0, right: 10, left: -10, bottom: 0 }}>
+                              <CartesianGrid stroke="rgba(255,255,255,0.05)" />
+                              <XAxis type="number" domain={[0, 100]} stroke="#71717A" fontSize={10} />
+                              <YAxis
+                                type="category"
+                                dataKey="category"
+                                stroke="#71717A"
+                                fontSize={10}
+                                width={75}
+                              />
+                              <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
+                              <Bar dataKey="score" radius={[0, 4, 4, 0]}>
+                                {activeAnalysis.risks.map((r: any, i: number) => (
+                                  <Cell
+                                    key={i}
+                                    fill={r.score > 65 ? "#ef4444" : r.score > 45 ? "#F59E0B" : "#10b981"}
+                                  />
+                                ))}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+
+                        {/* Cohesive ML Outcome Module */}
+                        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5">
+                              <Cpu className="h-3.5 w-3.5 text-[color:var(--accent)]" />
+                              <span className="font-mono text-[10px] uppercase tracking-wider text-[color:var(--muted-foreground)]">
+                                ML Model Prediction
                               </span>
                             </div>
+                            <span className={`px-2 py-0.5 rounded font-mono text-[10px] font-bold uppercase tracking-wider border ${
+                              isSuccess 
+                                ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" 
+                                : "bg-red-500/15 text-red-400 border-red-500/25"
+                            }`}>
+                              {isSuccess ? "Success (Viable)" : "Failure Risk"}
+                            </span>
                           </div>
-                        </div>
 
-                        <div className="flex items-center gap-6 self-start sm:self-center shrink-0">
-                          <div className="text-right">
-                            <p className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--muted-foreground)]">Success</p>
-                            <p className="font-display text-2xl font-bold text-emerald-400">
-                              {Math.round(mlVerdict.successProbability)}%
-                            </p>
+                          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/5 flex">
+                            <div 
+                              className="h-full bg-emerald-500 transition-all duration-700" 
+                              style={{ width: `${mlVerdict.successProbability}%` }}
+                              title={`Success: ${mlVerdict.successProbability}%`}
+                            />
+                            <div 
+                              className="h-full bg-red-500 transition-all duration-700" 
+                              style={{ width: `${mlVerdict.failureProbability}%` }}
+                              title={`Failure: ${mlVerdict.failureProbability}%`}
+                            />
                           </div>
-                          <div className="h-8 w-px bg-white/10" />
-                          <div className="text-right">
-                            <p className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--muted-foreground)]">Failure</p>
-                            <p className="font-display text-2xl font-bold text-red-400">
-                              {Math.round(mlVerdict.failureProbability)}%
-                            </p>
+
+                          <div className="mt-1.5 flex justify-between font-mono text-[10px] text-[color:var(--muted-foreground)]">
+                            <span className="text-emerald-400">● {Math.round(mlVerdict.successProbability)}% Success Viability</span>
+                            <span className="text-red-400">● {Math.round(mlVerdict.failureProbability)}% Failure Risk</span>
                           </div>
                         </div>
                       </div>
-
-                      {/* Dual Progress Meter */}
-                      <div className="mt-4">
-                        <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/5 flex">
-                          <div 
-                            className="h-full bg-emerald-500 transition-all duration-1000" 
-                            style={{ width: `${mlVerdict.successProbability}%` }}
-                            title={`Success: ${mlVerdict.successProbability}%`}
-                          />
-                          <div 
-                            className="h-full bg-red-500 transition-all duration-1000" 
-                            style={{ width: `${mlVerdict.failureProbability}%` }}
-                            title={`Failure: ${mlVerdict.failureProbability}%`}
-                          />
-                        </div>
-                        <div className="mt-1.5 flex justify-between font-mono text-[10px] text-[color:var(--muted-foreground)]">
-                          <span className="text-emerald-400">● {Math.round(mlVerdict.successProbability)}% Success Viability</span>
-                          <span className="text-red-400">● {Math.round(mlVerdict.failureProbability)}% Failure Probability</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-6 md:grid-cols-2">
-                      <ChartCard title="6-month revenue projection" icon={TrendingUp}>
-                        <ResponsiveContainer width="100%" height={260}>
-                          <LineChart data={activeAnalysis.projections}>
-                            <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                            <XAxis dataKey="month" stroke="#71717A" fontSize={11} />
-                            <YAxis stroke="#71717A" fontSize={11} />
-                            <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                            <Line
-                              type="monotone"
-                              dataKey="revenue"
-                              stroke="#F59E0B"
-                              strokeWidth={2}
-                              dot={{ r: 3, fill: "#F59E0B" }}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="cost"
-                              stroke="#71717A"
-                              strokeWidth={1.5}
-                              strokeDasharray="4 4"
-                              dot={false}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </ChartCard>
-
-                      <ChartCard title="Risk profile" icon={AlertTriangle}>
-                        <ResponsiveContainer width="100%" height={260}>
-                          <BarChart data={activeAnalysis.risks} layout="vertical">
-                            <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                            <XAxis type="number" domain={[0, 100]} stroke="#71717A" fontSize={11} />
-                            <YAxis
-                              type="category"
-                              dataKey="category"
-                              stroke="#71717A"
-                              fontSize={11}
-                              width={90}
-                            />
-                            <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                            <Bar dataKey="score" radius={[0, 6, 6, 0]}>
-                              {activeAnalysis.risks.map((r: any, i: number) => (
-                                <Cell
-                                  key={i}
-                                  fill={r.score > 65 ? "#ef4444" : r.score > 45 ? "#F59E0B" : "#10b981"}
-                                />
-                              ))}
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </ChartCard>
-                    </div>
+                    </ChartCard>
                   </div>
                 );
               })()}
