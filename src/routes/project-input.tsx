@@ -262,14 +262,9 @@ function ProjectInputPage() {
         {/* FORM */}
         <form onSubmit={handleRunAnalysis} className="glass-card p-6 md:p-7 flex flex-col justify-between h-full">
           <div>
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-4">
-              <div>
-                <h2 className="font-display text-xl font-semibold">Startup Details</h2>
-                <p className="mt-0.5 text-xs text-[color:var(--muted-foreground)]">
-                  Enter project parameters for real-time market synthesis
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-4">
+              <h2 className="font-display text-xl font-semibold">Startup Details</h2>
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={fillDemo}
@@ -452,13 +447,13 @@ function ProjectInputPage() {
 
 
         {/* ANALYSIS */}
-        <section className="flex flex-col h-full justify-between gap-5">
+        <section className="flex flex-col h-full gap-4">
           {isAiSearching ? (
             <CreativeAiRadarLoader projectName={activeProjectName} industry={form.industry || saved?.industry || ""} />
           ) : !activeAnalysis ? (
             <EmptyAnalysis />
           ) : (
-            <div className="flex flex-col h-full justify-between gap-5">
+            <div className="flex flex-col h-full gap-4">
               <header className="glass-card px-5 py-3.5 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <h2 className="font-display text-xl font-semibold tracking-tight">{activeProjectName}</h2>
@@ -515,70 +510,69 @@ function ProjectInputPage() {
                 const isSuccess = mlVerdict.prediction === "Success";
 
                 return (
-                  <div className="flex-1 flex flex-col justify-between gap-5">
-                    {/* Upper Row: 2 Balanced Charts */}
-                    <div className="grid gap-5 md:grid-cols-2">
-                      <ChartCard title="6-Month Revenue Projection" icon={TrendingUp}>
-                        <ResponsiveContainer width="100%" height={210}>
-                          <LineChart data={activeAnalysis.projections}>
-                            <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                            <XAxis dataKey="month" stroke="#71717A" fontSize={11} />
-                            <YAxis stroke="#71717A" fontSize={11} />
-                            <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                            <Line
-                              type="monotone"
-                              dataKey="revenue"
-                              stroke="#F59E0B"
-                              strokeWidth={2.5}
-                              dot={{ r: 3.5, fill: "#F59E0B" }}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="cost"
-                              stroke="#71717A"
-                              strokeWidth={1.5}
-                              strokeDasharray="4 4"
-                              dot={false}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </ChartCard>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+                    {/* Bento Tile 1: 6-Month Revenue Projection */}
+                    <ChartCard title="6-Month Revenue Projection" icon={TrendingUp}>
+                      <ResponsiveContainer width="100%" height={230}>
+                        <LineChart data={activeAnalysis.projections}>
+                          <CartesianGrid stroke="rgba(255,255,255,0.05)" />
+                          <XAxis dataKey="month" stroke="#71717A" fontSize={11} />
+                          <YAxis stroke="#71717A" fontSize={11} />
+                          <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
+                          <Line
+                            type="monotone"
+                            dataKey="revenue"
+                            stroke="#F59E0B"
+                            strokeWidth={2.5}
+                            dot={{ r: 3.5, fill: "#F59E0B" }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="cost"
+                            stroke="#71717A"
+                            strokeWidth={1.5}
+                            strokeDasharray="4 4"
+                            dot={false}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </ChartCard>
 
-                      <ChartCard title="Risk Profile Breakdown" icon={AlertTriangle}>
-                        <ResponsiveContainer width="100%" height={210}>
-                          <BarChart data={activeAnalysis.risks} layout="vertical" margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                            <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                            <XAxis type="number" domain={[0, 100]} stroke="#71717A" fontSize={11} />
-                            <YAxis
-                              type="category"
-                              dataKey="category"
-                              stroke="#A1A1AA"
-                              fontSize={11}
-                              width={80}
-                            />
-                            <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                            <Bar dataKey="score" radius={[0, 6, 6, 0]}>
-                              {activeAnalysis.risks.map((r: any, i: number) => (
-                                <Cell
-                                  key={i}
-                                  fill={r.score > 65 ? "#ef4444" : r.score > 45 ? "#F59E0B" : "#10b981"}
-                                />
-                              ))}
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </ChartCard>
-                    </div>
+                    {/* Bento Tile 2: Risk Profile Breakdown */}
+                    <ChartCard title="Risk Profile Breakdown" icon={AlertTriangle}>
+                      <ResponsiveContainer width="100%" height={230}>
+                        <BarChart data={activeAnalysis.risks} layout="vertical" margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                          <CartesianGrid stroke="rgba(255,255,255,0.05)" />
+                          <XAxis type="number" domain={[0, 100]} stroke="#71717A" fontSize={11} />
+                          <YAxis
+                            type="category"
+                            dataKey="category"
+                            stroke="#A1A1AA"
+                            fontSize={11}
+                            width={80}
+                          />
+                          <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
+                          <Bar dataKey="score" radius={[0, 6, 6, 0]}>
+                            {activeAnalysis.risks.map((r: any, i: number) => (
+                              <Cell
+                                key={i}
+                                fill={r.score > 65 ? "#ef4444" : r.score > 45 ? "#F59E0B" : "#10b981"}
+                              />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </ChartCard>
 
-                    {/* Bottom Row: Machine Learning Venture Verdict Card */}
-                    <div className={`glass-card p-5 border transition-all duration-300 ${
+                    {/* Bento Tile 3: Machine Learning Venture Verdict Card (Full Width) */}
+                    <div className={`md:col-span-2 glass-card p-5 border transition-all duration-300 ${
                       isSuccess 
                         ? "border-emerald-500/30 bg-gradient-to-r from-emerald-950/30 via-emerald-950/10 to-transparent shadow-[0_0_30px_rgba(16,185,129,0.12)]" 
                         : "border-red-500/30 bg-gradient-to-r from-red-950/30 via-red-950/10 to-transparent shadow-[0_0_30px_rgba(239,68,68,0.12)]"
                     }`}>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-3.5">
-                          <div className={`p-3 rounded-xl border shrink-0 ${
+                          <div className={`p-2.5 rounded-xl border shrink-0 ${
                             isSuccess 
                               ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]" 
                               : "bg-red-500/15 text-red-400 border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
@@ -586,11 +580,9 @@ function ProjectInputPage() {
                             <Cpu className="h-5 w-5" />
                           </div>
                           <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-display text-base font-semibold tracking-tight text-[color:var(--foreground)]">
-                                ML Venture Viability Intelligence
-                              </h3>
-                            </div>
+                            <h3 className="font-display text-base font-semibold tracking-tight text-[color:var(--foreground)]">
+                              ML Venture Viability Intelligence
+                            </h3>
                             <p className="mt-0.5 text-xs text-[color:var(--muted-foreground)]">
                               Trained on 48,000+ venture outcomes & real-time capital velocity signals
                             </p>
@@ -609,7 +601,7 @@ function ProjectInputPage() {
                       </div>
 
                       {/* Dual Progress Meter */}
-                      <div className="mt-4 pt-3 border-t border-white/5">
+                      <div className="mt-3.5 pt-3 border-t border-white/5">
                         <div className="flex justify-between items-center text-xs font-medium mb-2">
                           <span className="text-emerald-400 font-sans flex items-center gap-1.5">
                             <span className="h-2 w-2 rounded-full bg-emerald-400 inline-block shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
