@@ -20,8 +20,8 @@
 
 | Name | Role | Focus Area |
 | :--- | :--- | :--- |
-| 🧑‍💻 **Aryan Saini** | Project Lead & Full-Stack | System Architecture, Frontend UI/UX, Backend API Integration |
-| 👨‍💻 **Ansh Patel** | Machine Learning Engineer | Model Training, XGBoost Pipeline, Dataset Optimization |
+| 🧑‍💻 **Aryan Saini** | Project Lead & Machine Learning | System Architecture, XGBoost ML Pipeline, Backend API Engine |
+| 👨‍💻 **Ansh Patel** | Frontend & UI/UX Engineer | React 19 Interface, TanStack Routing, Interactive Recharts Dashboard |
 | 👩‍💻 **Isha Zope** | Data & Intelligence | Gemini AI Feature Engineering, Prompt Architecture, Analytics |
 | 👩‍💻 **Jeevitha** | Cloud & Quality Assurance | Supabase PostgreSQL Security, API Routing, System Testing |
 
