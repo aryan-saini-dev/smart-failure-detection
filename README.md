@@ -145,42 +145,71 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 
 ## 🏗️ System Architecture
 
-### 🏛️ High-Level System Architecture
+### High-Level Overview
 
-```mermaid
-flowchart TB
-    subgraph Client["🖥️ Frontend Layer (Vercel / Local)"]
-        UI["React 19 + TanStack Router"]
-        Visuals["Interactive Recharts & UI Dashboard"]
-        ClientAuth["Supabase Client Auth (Session / JWT)"]
-    end
-
-    subgraph Backend["⚙️ Backend & Inference Engine (Render / Docker)"]
-        NodeAPI["Node.js API Server (Port 8787)"]
-        ExecEngine["Python Execution Runtime (execFile)"]
-        MLModel["ML Model (startup_model_optimized.joblib)\nHistorical Crunchbase Dataset"]
-    end
-
-    subgraph External["☁️ Cloud Services & Intelligence"]
-        Gemini["Google Gemini 2.5 Flash API\n(Market Research & Feature Extraction)"]
-        SupabaseDB[("Supabase PostgreSQL DB\n(Projects Table + Row Level Security)")]
-    end
-
-    %% Client Interactions
-    UI -->|"1. Submit Startup Idea (POST /api/analyze)"| NodeAPI
-    UI <-->|"Save / Fetch Projects (Direct & Proxied)"| SupabaseDB
-    ClientAuth -->|"Auth State & RLS Tokens"| UI
-
-    %% Backend AI / ML Pipeline
-    NodeAPI -->|"2. Prompt for Market Research & ML Features"| Gemini
-    Gemini -->|"3. Competitive Intelligence + 7 Numerical Features"| NodeAPI
-    NodeAPI -->|"4. Execute predict.py (features payload)"| ExecEngine
-    ExecEngine -->|"5. Run Inference"| MLModel
-    MLModel -->|"6. Failure / Success Probability Score"| ExecEngine
-    ExecEngine -->|"7. Return ML Result"| NodeAPI
-    NodeAPI -->|"8. Complete Intelligence Report"| UI
-    UI -->|"9. Render Visual Breakdown & Quantitative Verdict"| Visuals
 ```
+┌─────────────────────────────────────────────────────────────────┐
+│                   Smart Failure Detection                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │            FRONTEND (React 19 + TanStack)                │  │
+│  │  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐    │  │
+│  │  │Landing Page │  │Project Input │  │Risk Dashboard│    │  │
+│  │  └─────────────┘  └──────────────┘  └──────────────┘    │  │
+│  │  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐    │  │
+│  │  │Auth / Demo  │  │User Profile  │  │Saved Reports │    │  │
+│  │  └─────────────┘  └──────────────┘  └──────────────┘    │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                         │                                       │
+│                         ▼                                       │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │            BACKEND (Node.js REST API Server)             │  │
+│  │  ┌─────────────────────────────────────────────────┐    │  │
+│  │  │     Failure Prediction & Analytics Pipeline     │    │  │
+│  │  └─────────────────────────────────────────────────┘    │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                         │                                       │
+│         ┌───────────────┴───────────────┐                       │
+│         ▼                               ▼                       │
+│  ┌─────────────┐                 ┌──────────────┐              │
+│  │  Gemini AI  │                 │  ML Engine   │              │
+│  │ (Market/LLM)│                 │  (XGBoost)   │              │
+│  │ Google Cloud│                 │ Python exec  │              │
+│  └─────────────┘                 └──────────────┘              │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │     PROCESSING & INTELLIGENCE MODULES                    │  │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │  │
+│  │  │Market Intel  │  │Competitors   │  │Risk Scorer   │  │  │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘  │  │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │  │
+│  │  │Projections   │  │ML Inference  │  │Suggestions   │  │  │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘  │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │     DATA STORAGE & SECURITY                              │  │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │  │
+│  │  │Supabase DB   │  │Auth Sessions │  │PostgreSQL RLS│  │  │
+│  │  │(Projects)    │  │(JWT Tokens)  │  │(Policies)    │  │  │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘  │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Core Modules
+
+| Module | Responsibility | File |
+| :--- | :--- | :--- |
+| 📊 **Analysis Engine** | Projections, industry CAGR growth, and risk rule calculations | `src/lib/analysis.ts` |
+| 🤖 **AI & ML Orchestrator** | Gemini API integration, ML feature extraction & process spawning | `server/index.js` |
+| 🧠 **ML Predictor** | Machine learning inference via XGBoost decision trees | `server/ml/predict.py` |
+| 📈 **Model Training** | Model training & optimization on 48k Crunchbase startup records | `Dataset/train_model.py` |
+| 🗄️ **Database Client** | Supabase PostgreSQL client & authentication operations | `src/lib/supabase.ts` |
+| ⚡ **API Client** | Local & production backend communication bridge | `src/lib/local-api.ts` |
+| 👤 **Demo Session** | Local guest session & sample startup generator | `src/lib/demo-session.ts` |
 
 ---
 
