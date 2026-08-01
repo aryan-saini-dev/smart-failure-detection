@@ -32,39 +32,46 @@ export function SiteNav() {
   useEffect(() => {
     let mounted = true;
 
-    function syncDemoUser() {
-      if (hasDemoSession()) setUser({ email: "Demo user", initials: "DU", isDemo: true });
-      else setUser(null);
+    function syncAuth() {
+      void getCurrentUser()
+        .then(({ user }) => {
+          if (!mounted) return;
+          if (!user) {
+            if (hasDemoSession()) {
+              setUser({ email: "Demo user", initials: "DU", isDemo: true });
+            } else {
+              setUser(null);
+            }
+            return;
+          }
+          const initials =
+            user.name
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((part: string) => part[0])
+              .join("")
+              .toUpperCase() || "SF";
+          setUser({
+            email: user.email,
+            avatarUrl: user.avatarUrl,
+            initials,
+          });
+        })
+        .catch(() => {
+          if (mounted) setUser(null);
+        });
     }
 
-    void getCurrentUser()
-      .then(({ user }) => {
-        if (!mounted) return;
-        if (!user && hasDemoSession()) {
-          setUser({ email: "Demo user", initials: "DU", isDemo: true });
-          return;
-        }
-        if (!user) return;
-        const initials =
-          user.name
-            .split(/\s+/)
-            .filter(Boolean)
-            .slice(0, 2)
-            .map((part: string) => part[0])
-            .join("")
-            .toUpperCase() || "SF";
-        setUser({
-          email: user.email,
-          avatarUrl: user.avatarUrl,
-          initials,
-        });
-      })
-      .catch(() => undefined);
-    window.addEventListener("smart-failure-demo-change", syncDemoUser);
+    syncAuth();
+
+    window.addEventListener("smart-failure-demo-change", syncAuth);
+    window.addEventListener("smart-failure-auth-change", syncAuth);
 
     return () => {
       mounted = false;
-      window.removeEventListener("smart-failure-demo-change", syncDemoUser);
+      window.removeEventListener("smart-failure-demo-change", syncAuth);
+      window.removeEventListener("smart-failure-auth-change", syncAuth);
     };
   }, []);
 
@@ -75,30 +82,26 @@ export function SiteNav() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[color:var(--border)] bg-[color:var(--background)]/70 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center gap-5 px-5 py-3 md:px-8">
-        <Link to="/" className="group flex min-w-0 items-center">
+    <header className="sticky top-0 z-40 border-b border-[color:var(--border)] bg-[color:var(--card-solid)]/60 backdrop-blur-[12px]">
+      <div className="mx-auto flex max-w-[95%] items-center gap-6 px-5 py-4 md:px-8">
+        <Link to="/" className="group flex min-w-0 items-center mr-2">
           <Logo size="md" />
         </Link>
 
-
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-2">
           {links.map((link) => {
             const active = link.to === "/" ? pathname === "/" : pathname.startsWith(link.to);
             return (
               <Link
                 key={link.to}
                 to={link.to}
-                className={`relative rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:text-[color:var(--accent)] ${
+                className={`relative rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] ${
                   active
-                    ? "text-[color:var(--foreground)]"
-                    : "text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)]"
+                    ? "bg-white/10 text-white shadow-sm"
+                    : "text-[color:var(--muted-foreground)] hover:bg-white/5 hover:text-white"
                 }`}
               >
                 {link.label}
-                {active && (
-                  <span className="absolute inset-x-3 -bottom-[1px] h-px bg-[color:var(--accent)] shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
-                )}
               </Link>
             );
           })}
@@ -144,7 +147,7 @@ export function SiteNav() {
           ) : (
             <Link
               to="/login"
-              className="rounded-md border border-white/12 px-3 py-1.5 text-xs font-medium text-[color:var(--foreground)] transition-colors hover:border-white/25 hover:bg-white/5"
+              className="inline-flex items-center justify-center rounded-full bg-white/10 px-5 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-white/20 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
             >
               Sign in
             </Link>

@@ -61,6 +61,11 @@ Spin up the containerized PostgreSQL database:
 docker compose up -d
 ```
 
+or if you have already made container then just start it by
+```bash
+docker compose start
+```
+
 > 💡 **Tip**: To verify PostgreSQL is running, run `docker compose ps`. You should see `postgres` running on port `5432`.
 
 ---

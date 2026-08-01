@@ -75,14 +75,8 @@ export function Logo({ size = "md", showText = true, className = "" }: LogoProps
 
       {/* Brand Name Text */}
       {showText && (
-        <span className={`font-display font-bold tracking-tight ${textSizes[size]}`}>
-          <span className="text-[color:var(--foreground)]">Smart </span>
-          <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 bg-clip-text text-transparent">
-            Failure
-          </span>
-          <span className="text-[color:var(--muted-foreground)] font-normal text-xs ml-1.5 hidden sm:inline-block tracking-wider uppercase">
-            Detection
-          </span>
+        <span className={`font-display font-bold tracking-tight text-[color:var(--foreground)] ${textSizes[size]}`}>
+          Smart Failure Detection
         </span>
       )}
     </div>

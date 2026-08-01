@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -57,6 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Aurora from "@/components/Aurora";
 
 export const Route = createFileRoute("/project-input")({
   head: () => ({
@@ -115,6 +116,7 @@ const empty: FormState = {
   description: "",
 };
 
+
 function ProjectInputPage() {
   const [form, setForm] = useState<FormState>(empty);
   const [submitting, setSubmitting] = useState(false);
@@ -124,18 +126,16 @@ function ProjectInputPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [tab, setTab] = useState<"overview" | "competitors" | "risk" | "market" | "suggestions">("overview");
 
-  // Manual AI search state
   const [liveAnalysis, setLiveAnalysis] = useState<any>(null);
+  const [analyzedForm, setAnalyzedForm] = useState<FormState | null>(null);
   const [isAiSearching, setIsAiSearching] = useState(false);
 
-  // Check current user session
   useEffect(() => {
     getCurrentUser().then(({ user }) => setCurrentUser(user));
   }, []);
 
   const activeAnalysis = saved?.analysis_data || liveAnalysis;
-  const activeProjectName = saved?.name || form.name.trim() || "Live Analysis";
-
+  const activeProjectName = saved?.name || analyzedForm?.name || form.name.trim() || "Live Analysis";
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -151,9 +151,9 @@ function ProjectInputPage() {
     setError(null);
     setSaved(null);
     setLiveAnalysis(null);
+    setAnalyzedForm(null);
   }
 
-  // 1. Explicit Run Analysis (Works for everyone)
   async function handleRunAnalysis(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -172,6 +172,7 @@ function ProjectInputPage() {
       const { analysis: aiResult } = await analyzeProject(form);
       if (aiResult) {
         setLiveAnalysis(aiResult);
+        setAnalyzedForm(form);
       }
     } catch (err) {
       console.warn("Manual AI analysis error:", err);
@@ -181,7 +182,6 @@ function ProjectInputPage() {
     }
   }
 
-  // 2. Save Analysis to Database (Requires authenticated account & completed analysis)
   async function handleSaveAnalysis(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -219,11 +219,21 @@ function ProjectInputPage() {
 
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-4 md:px-10 md:py-6">
+    <div className="relative min-h-[calc(100vh-64px)] w-full overflow-hidden">
+      {/* Interactive Background */}
+      <div className="fixed inset-0 z-0">
+        <Aurora
+          colorStops={["#F97316","#ffc1ab","#ff5d00"]}
+          blend={0.67}
+          amplitude={1.0}
+          speed={1}
+        />
+        {/* Subtle overlay to ensure text readability */}
+        <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px]" />
+      </div>
+
+      <main className="relative z-10 mx-auto max-w-[95%] px-6 py-4 md:px-10 md:py-6">
       <div className="mb-4">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[color:var(--accent)]">
-          Project input
-        </p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
           Startup Submission
         </h1>
@@ -372,7 +382,7 @@ function ProjectInputPage() {
             >
               {runningAnalysis || isAiSearching ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Running AI Analysis…
+                  <Loader2 className="h-4 w-4 animate-spin" /> Analyzing market data…
                 </>
               ) : (
                 <>
@@ -431,7 +441,7 @@ function ProjectInputPage() {
                   <h2 className="font-display text-xl font-semibold tracking-tight">{activeProjectName}</h2>
                   <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium text-amber-300">
                     <Sparkles className="h-3 w-3 text-amber-400" />
-                    <span>AI Online Research Active</span>
+                    <span>Live Market Research Active</span>
                   </div>
                 </div>
 
@@ -443,15 +453,15 @@ function ProjectInputPage() {
                   <Stat
                     label="Budget"
                     value={formatCurrency(
-                      form.budget || saved?.budget || 0,
-                      form.currency || saved?.currency || "USD"
+                      saved?.budget || analyzedForm?.budget || 0,
+                      saved?.currency || analyzedForm?.currency || "USD"
                     )}
                   />
                 </div>
               </header>
 
 
-              <div className="flex gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1">
+              <div className="flex gap-1 p-1 glass-card">
                 {(
                   [
                     { id: "overview", label: "Revenue & Risk" },
@@ -502,30 +512,60 @@ function ProjectInputPage() {
                     </ResponsiveContainer>
                   </ChartCard>
 
-                  <ChartCard title="Risk profile" icon={AlertTriangle}>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={activeAnalysis.risks} layout="vertical">
-                        <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                        <XAxis type="number" domain={[0, 100]} stroke="#71717A" fontSize={11} />
-                        <YAxis
-                          type="category"
-                          dataKey="category"
-                          stroke="#71717A"
-                          fontSize={11}
-                          width={90}
-                        />
-                        <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                        <Bar dataKey="score" radius={[0, 6, 6, 0]}>
-                          {activeAnalysis.risks.map((r: any, i: number) => (
-                            <Cell
-                              key={i}
-                              fill={r.score > 65 ? "#ef4444" : r.score > 45 ? "#F59E0B" : "#10b981"}
+                  <div className="flex flex-col gap-6">
+                    <ChartCard title="Risk profile" icon={AlertTriangle}>
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={activeAnalysis.risks} layout="vertical">
+                          <CartesianGrid stroke="rgba(255,255,255,0.05)" />
+                          <XAxis type="number" domain={[0, 100]} stroke="#71717A" fontSize={11} />
+                          <YAxis
+                            type="category"
+                            dataKey="category"
+                            stroke="#71717A"
+                            fontSize={11}
+                            width={90}
+                          />
+                          <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
+                          <Bar dataKey="score" radius={[0, 6, 6, 0]}>
+                            {activeAnalysis.risks.map((r: any, i: number) => (
+                              <Cell
+                                key={i}
+                                fill={r.score > 65 ? "#ef4444" : r.score > 45 ? "#F59E0B" : "#10b981"}
+                              />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </ChartCard>
+
+                    {activeAnalysis.mlPrediction && (
+                      <ChartCard title="Quantitative Verdict" icon={Cpu}>
+                        <div className="flex flex-col justify-center">
+                          <div className="flex items-end justify-between mb-3">
+                            <div>
+                              <p className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--muted-foreground)]">Model Verdict</p>
+                              <p className={`font-display text-2xl font-bold leading-none mt-1 ${activeAnalysis.mlPrediction.prediction === 'Success' ? 'text-emerald-400' : 'text-red-400'}`}>
+                                {activeAnalysis.mlPrediction.prediction}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--muted-foreground)]">Success Probability</p>
+                              <p className="font-display text-xl font-semibold leading-none mt-1 text-[color:var(--foreground)]">
+                                {Math.round(activeAnalysis.mlPrediction.successProbability)}%
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-1000 ${activeAnalysis.mlPrediction.prediction === 'Success' ? 'bg-emerald-500' : 'bg-red-500'}`} 
+                              style={{ width: `${activeAnalysis.mlPrediction.successProbability}%` }}
                             />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartCard>
+                          </div>
+                        </div>
+                      </ChartCard>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -715,6 +755,7 @@ function ProjectInputPage() {
         </section>
       </div>
     </main>
+    </div>
   );
 }
 

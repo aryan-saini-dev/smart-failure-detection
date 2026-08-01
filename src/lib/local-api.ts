@@ -27,10 +27,16 @@ export function getSessionToken() {
 
 export function setSessionToken(token: string) {
   localStorage.setItem(SESSION_KEY, token);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("smart-failure-auth-change"));
+  }
 }
 
 export function clearSessionToken() {
   localStorage.removeItem(SESSION_KEY);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("smart-failure-auth-change"));
+  }
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

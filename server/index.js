@@ -2,8 +2,12 @@ import http from "node:http";
 import { randomBytes, randomUUID } from "node:crypto";
 import { Pool } from "pg";
 import bcrypt from "bcryptjs";
-
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
+import path from "node:path";
 import process from "node:process";
+
+const execAsync = promisify(exec);
 
 try {
   process.loadEnvFile();
@@ -38,8 +42,9 @@ Project Details:
 - Description: ${p.description}
 
 Analyze real market competitors, identify strengths/weaknesses, compute risk factors, dynamic financial revenue/cost projections over 6 months, and market adoption segments.
+In addition, extract or estimate the following features specifically formatted for our ML model in the 'mlFeatures' object based on the context. If dates or exact numbers aren't provided, make highly realistic estimates for an early-stage startup.
 
-Respond strictly in JSON matching this JSON schema:
+Respond strictly in JSON matching this JSON schema (do not include markdown blocks, just the JSON):
 {
   "growth": <annual industry growth percentage e.g. 24>,
   "overallRisk": <risk score 0-100>,
@@ -68,7 +73,16 @@ Respond strictly in JSON matching this JSON schema:
   ],
   "marketSegments": [
     { "name": "<Segment>", "value": <0-100 number> }
-  ]
+  ],
+  "mlFeatures": {
+    "funding_total_usd": <Convert budget to USD numeric value e.g. 500000>,
+    "funding_rounds": <Estimate 1 to 5 rounds based on context>,
+    "funding_duration": <Estimate days between first and last funding round, e.g. 0 if only 1 round, or 365 if multiple>,
+    "time_to_first_funding": <Estimate days from founding to first funding, e.g. 30 to 365>,
+    "category_count": <Count of distinct categories the startup falls into (1 to 5)>,
+    "country_code": "<3-letter ISO country code e.g. USA, GBR, IND>",
+    "main_category": "<Primary industry sector e.g. Software, E-Commerce, Mobile, Health Care>"
+  }
 }`;
 
     const resp = await fetch(
@@ -90,11 +104,38 @@ Respond strictly in JSON matching this JSON schema:
     }
 
     const data = await resp.json();
-    const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    let candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (candidateText) {
+      candidateText = candidateText.replace(/```json/gi, "").replace(/```/g, "").trim();
       const parsed = JSON.parse(candidateText);
       if (parsed && parsed.competitors && parsed.risks && parsed.projections) {
         console.log("✨ Successfully retrieved online market & competitor review from Gemini AI!");
+        
+        // ML Model Integration
+        if (parsed.mlFeatures) {
+          console.log("🧠 Sending Gemini features to local ML pipeline...");
+          try {
+            const pythonPath = process.env.PYTHON_PATH || path.resolve(process.cwd(), "Dataset/venv/Scripts/python.exe");
+            const scriptPath = path.resolve(process.cwd(), "server/ml/predict.py");
+            
+            // On Windows, carefully escape the JSON string argument for powershell/cmd
+            const arg = JSON.stringify(parsed.mlFeatures).replace(/"/g, '\\"');
+            const { stdout } = await execAsync(`"${pythonPath}" "${scriptPath}" "${arg}"`);
+            
+            const mlResult = JSON.parse(stdout);
+            if (!mlResult.error) {
+              console.log("✅ ML Prediction Result:", mlResult);
+              parsed.mlPrediction = mlResult;
+              // Adjust overall risk based on ML failure probability if we want
+              parsed.overallRisk = Math.round((parsed.overallRisk + mlResult.failureProbability) / 2);
+            } else {
+              console.error("❌ ML Prediction Error inside python script:", mlResult.error);
+            }
+          } catch (mlErr) {
+            console.error("❌ Failed to execute ML script:", mlErr);
+          }
+        }
+        
         return parsed;
       }
     }
