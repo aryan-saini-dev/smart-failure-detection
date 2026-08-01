@@ -541,9 +541,6 @@ function ProjectInputPage() {
                                 Verdict: {mlVerdict.prediction} ({isSuccess ? "Viable Venture" : "High Failure Risk"})
                               </span>
                             </div>
-                            <p className="mt-1 text-sm text-[color:var(--muted-foreground)]">
-                              Trained on 48,000+ venture outcomes. Quantitatively analyzes funding velocity, sector risk, and runway.
-                            </p>
                           </div>
                         </div>
 
