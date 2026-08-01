@@ -1,11 +1,11 @@
 import http from "node:http";
-import { exec } from "node:child_process";
+import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import process from "node:process";
 import { createClient } from "@supabase/supabase-js";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 try {
   process.loadEnvFile();
@@ -114,8 +114,7 @@ Respond strictly in JSON matching this JSON schema (do not include markdown bloc
             const pythonPath = process.env.PYTHON_PATH || path.resolve(process.cwd(), "Dataset/venv/Scripts/python.exe");
             const scriptPath = path.resolve(process.cwd(), "server/ml/predict.py");
             
-            const arg = JSON.stringify(parsed.mlFeatures).replace(/"/g, '\\"');
-            const { stdout } = await execAsync(`"${pythonPath}" "${scriptPath}" "${arg}"`);
+            const { stdout } = await execFileAsync(pythonPath, [scriptPath, JSON.stringify(parsed.mlFeatures)]);
             
             const mlResult = JSON.parse(stdout);
             if (!mlResult.error) {
@@ -168,7 +167,12 @@ function generateFallbackAnalysis(p) {
       { name: "Early Adopters", value: 35 },
       { name: "Mainstream", value: 45 },
       { name: "Late Majority", value: 20 }
-    ]
+    ],
+    mlPrediction: {
+      prediction: "Success",
+      failureProbability: 48,
+      successProbability: 52
+    }
   };
 }
 

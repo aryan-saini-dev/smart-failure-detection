@@ -68,6 +68,11 @@ export type AnalysisResult = {
   growth: number;
   overallRisk: number;
   suggestions?: SuggestionItem[];
+  mlPrediction?: {
+    prediction: "Success" | "Failure";
+    failureProbability: number;
+    successProbability: number;
+  };
 };
 
 const INDUSTRY_GROWTH_RATES: Record<string, number> = {
@@ -230,7 +235,14 @@ export function computeRuleBasedAnalysis(p: Project): AnalysisResult {
           { name: "Late Majority", value: 20 },
         ];
 
-  const result: AnalysisResult = { projections, risks, competitors, marketSegments, growth, overallRisk };
+  const failureProb = Math.min(95, Math.max(5, overallRisk));
+  const mlPrediction = {
+    prediction: (failureProb > 50 ? "Failure" : "Success") as "Failure" | "Success",
+    failureProbability: failureProb,
+    successProbability: 100 - failureProb,
+  };
+
+  const result: AnalysisResult = { projections, risks, competitors, marketSegments, growth, overallRisk, mlPrediction };
   result.suggestions = generateStartupSuggestions(p, result);
   return result;
 }
