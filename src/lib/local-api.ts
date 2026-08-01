@@ -2,10 +2,15 @@ import { createClient } from "@supabase/supabase-js";
 import type { Project } from "@/lib/analysis";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://placeholder-project.supabase.co";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "placeholder-anon-key";
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: typeof window !== "undefined",
+    autoRefreshToken: typeof window !== "undefined",
+  },
+});
 
 export type LocalUser = {
   id: string;
@@ -21,12 +26,16 @@ export type ProjectRecord = Project & {
   user_id: string;
 };
 
-// Listen to Supabase Auth state changes to dispatch our custom event
-supabase.auth.onAuthStateChange(() => {
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event("smart-failure-auth-change"));
+// Listen to Supabase Auth state changes only in browser
+if (typeof window !== "undefined") {
+  try {
+    supabase.auth.onAuthStateChange(() => {
+      window.dispatchEvent(new Event("smart-failure-auth-change"));
+    });
+  } catch (err) {
+    console.warn("Supabase auth listener initialization failed:", err);
   }
-});
+}
 
 export async function registerUser(input: { name: string; email: string; password: string }) {
   const { data, error } = await supabase.auth.signUp({

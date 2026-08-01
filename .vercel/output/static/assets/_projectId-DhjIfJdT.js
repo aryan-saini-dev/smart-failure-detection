@@ -1,2 +1,0 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/_projectId-Dm6gY0mD.js","assets/createLucideIcon-epPkhwdD.js","assets/analysis-BPkphCjG.js","assets/radar-BKXC3H6f.js","assets/local-api-B6XNjJ5L.js","assets/demo-session-DTmMr12f.js"])))=>i.map(i=>d[i]);
-import{n as e,t}from"./lazyRouteComponent-2Zm6Q0Ty.js";import{l as n}from"./local-api-B6XNjJ5L.js";var r=e(`/projects/$projectId`)({component:t(()=>n(()=>import(`./_projectId-Dm6gY0mD.js`),__vite__mapDeps([0,1,2,3,4,5])),`component`)});export{r as t};
