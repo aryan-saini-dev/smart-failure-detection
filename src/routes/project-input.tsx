@@ -144,6 +144,7 @@ function ProjectInputPage() {
   const [saved, setSaved] = useState<Project | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [tab, setTab] = useState<"overview" | "competitors" | "risk" | "market" | "suggestions">("overview");
+  const [mobileView, setMobileView] = useState<"form" | "analysis">("form");
 
   const [liveAnalysis, setLiveAnalysis] = useState<any>(null);
   const [analyzedForm, setAnalyzedForm] = useState<FormState | null>(null);
@@ -171,6 +172,7 @@ function ProjectInputPage() {
     setSaved(null);
     setLiveAnalysis(null);
     setAnalyzedForm(null);
+    setMobileView("form");
   }
 
   async function handleRunAnalysis(e: React.FormEvent) {
@@ -192,6 +194,7 @@ function ProjectInputPage() {
       if (aiResult) {
         setLiveAnalysis(aiResult);
         setAnalyzedForm(form);
+        setMobileView("analysis");
       }
     } catch (err) {
       console.warn("Manual AI analysis error:", err);
@@ -252,39 +255,74 @@ function ProjectInputPage() {
       </div>
 
       <main className="relative z-10 mx-auto max-w-[95%] px-3.5 py-4 sm:px-6 md:px-10 md:py-6">
-      <div className="mb-4">
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">
           Startup Submission
         </h1>
+
+        {/* Mobile View Toggle Pills (Only on mobile when analysis is active) */}
+        {activeAnalysis && (
+          <div className="flex lg:hidden p-1 glass-card rounded-xl">
+            <button
+              type="button"
+              onClick={() => setMobileView("form")}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all ${
+                mobileView === "form"
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-[color:var(--muted-foreground)] hover:text-white"
+              }`}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Startup Details
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileView("analysis")}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all ${
+                mobileView === "analysis"
+                  ? "bg-[color:var(--accent)]/20 text-[color:var(--accent)] border border-[color:var(--accent)]/30 shadow-sm"
+                  : "text-[color:var(--muted-foreground)] hover:text-white"
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-[color:var(--accent)]" />
+              Analysis Results
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-5 lg:gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] items-stretch">
         {/* FORM */}
-        <form onSubmit={handleRunAnalysis} className="glass-card p-4 sm:p-6 md:p-7 flex flex-col justify-between h-full">
+        <form
+          onSubmit={handleRunAnalysis}
+          className={`glass-card p-4 sm:p-6 md:p-7 flex-col justify-between h-full ${
+            activeAnalysis && mobileView === "analysis" ? "hidden lg:flex" : "flex"
+          }`}
+        >
           <div>
-            <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-3.5 sm:pb-4">
-              <h2 className="font-display text-lg sm:text-xl font-semibold">Startup Details</h2>
+            <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-3 sm:pb-4">
+              <h2 className="font-display text-base sm:text-xl font-semibold">Startup Details</h2>
               <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={fillDemo}
-                  className="inline-flex items-center gap-1 sm:gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-xs font-medium text-[color:var(--foreground)] transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+                  className="inline-flex items-center gap-1 sm:gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2 sm:px-2.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-medium text-[color:var(--foreground)] transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
                 >
-                  <Dice5 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  <Dice5 className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={1.75} />
                   Fill demo
                 </button>
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="inline-flex items-center gap-1 sm:gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-xs font-medium text-[color:var(--muted-foreground)] transition-all duration-200 hover:border-white/25 hover:bg-white/5 hover:text-[color:var(--foreground)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+                  className="inline-flex items-center gap-1 sm:gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2 sm:px-2.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-medium text-[color:var(--muted-foreground)] transition-all duration-200 hover:border-white/25 hover:bg-white/5 hover:text-[color:var(--foreground)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
                 >
-                  <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  <RotateCcw className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={1.75} />
                   Reset
                 </button>
               </div>
             </div>
 
-            <div className="mt-4 sm:mt-5 space-y-3.5 sm:space-y-4">
+            <div className="mt-4 sm:mt-5 space-y-3 sm:space-y-4">
               <Field
                 label="Startup / Project name"
                 icon={<Building2 className="h-3.5 w-3.5" strokeWidth={1.5} />}
@@ -297,7 +335,7 @@ function ProjectInputPage() {
                 />
               </Field>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5">
                 <Field label="Industry" icon={<Radar className="h-3.5 w-3.5" strokeWidth={1.5} />}>
                   <Select value={form.industry} onValueChange={(val) => update("industry", val)}>
                     <SelectTrigger className={inputCls}>
@@ -305,7 +343,7 @@ function ProjectInputPage() {
                     </SelectTrigger>
                     <SelectContent className="border border-white/10 bg-[#12121a] text-[color:var(--foreground)] z-50">
                       {INDUSTRIES.map((i) => (
-                        <SelectItem key={i} value={i} className="hover:bg-white/10 cursor-pointer">
+                        <SelectItem key={i} value={i} className="hover:bg-white/10 cursor-pointer text-xs sm:text-sm">
                           {i}
                         </SelectItem>
                       ))}
@@ -322,7 +360,7 @@ function ProjectInputPage() {
                     </SelectTrigger>
                     <SelectContent className="border border-white/10 bg-[#12121a] text-[color:var(--foreground)] z-50">
                       {MODELS.map((i) => (
-                        <SelectItem key={i} value={i} className="hover:bg-white/10 cursor-pointer">
+                        <SelectItem key={i} value={i} className="hover:bg-white/10 cursor-pointer text-xs sm:text-sm">
                           {i}
                         </SelectItem>
                       ))}
@@ -357,12 +395,12 @@ function ProjectInputPage() {
                     value={form.currency || "USD"}
                     onValueChange={(val) => update("currency", val as CurrencyCode)}
                   >
-                    <SelectTrigger className="w-24 sm:w-28 rounded-lg border border-white/10 bg-[color:var(--card-solid)]/60 px-2.5 sm:px-3 py-2.5 text-sm text-[color:var(--foreground)] backdrop-blur">
+                    <SelectTrigger className="w-24 sm:w-28 rounded-lg border border-white/10 bg-[color:var(--card-solid)]/60 px-2.5 sm:px-3 py-2.5 text-xs sm:text-sm text-[color:var(--foreground)] backdrop-blur">
                       <SelectValue placeholder="Currency" />
                     </SelectTrigger>
                     <SelectContent className="border border-white/10 bg-[#12121a] text-[color:var(--foreground)] z-50">
                       {Object.entries(CURRENCY_MAP).map(([code, meta]) => (
-                        <SelectItem key={code} value={code} className="hover:bg-white/10 cursor-pointer">
+                        <SelectItem key={code} value={code} className="hover:bg-white/10 cursor-pointer text-xs sm:text-sm">
                           {meta.label}
                         </SelectItem>
                       ))}
@@ -411,6 +449,16 @@ function ProjectInputPage() {
               )}
             </button>
 
+            {activeAnalysis && (
+              <button
+                type="button"
+                onClick={() => setMobileView("analysis")}
+                className="flex lg:hidden w-full items-center justify-center gap-2 rounded-lg border border-[color:var(--accent)]/30 bg-[color:var(--accent)]/10 px-4 py-2 text-xs font-semibold text-[color:var(--accent)]"
+              >
+                View Analysis Results →
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleSaveAnalysis}
@@ -447,7 +495,11 @@ function ProjectInputPage() {
 
 
         {/* ANALYSIS */}
-        <section className="flex flex-col h-full gap-4">
+        <section
+          className={`flex-col h-full gap-4 ${
+            activeAnalysis && mobileView === "form" ? "hidden lg:flex" : "flex"
+          }`}
+        >
           {isAiSearching ? (
             <CreativeAiRadarLoader projectName={activeProjectName} industry={form.industry || saved?.industry || ""} />
           ) : !activeAnalysis ? (
@@ -463,7 +515,7 @@ function ProjectInputPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 sm:gap-5 border-t sm:border-t-0 border-white/5 pt-2.5 sm:pt-0 text-xs text-[color:var(--muted-foreground)]">
+                <div className="grid grid-cols-3 gap-2 text-center sm:text-left sm:flex sm:items-center sm:gap-5 border-t sm:border-t-0 border-white/5 pt-2.5 sm:pt-0 text-xs text-[color:var(--muted-foreground)]">
                   <Stat label="Growth" value={`${activeAnalysis.growth}%`} accent />
                   <div className="h-4 w-px bg-white/10 hidden sm:block" />
                   <Stat label="Risk" value={`${activeAnalysis.overallRisk}/100`} />
@@ -513,7 +565,7 @@ function ProjectInputPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
                     {/* Bento Tile 1: 6-Month Revenue Projection */}
                     <ChartCard title="6-Month Revenue Projection" icon={TrendingUp}>
-                      <ResponsiveContainer width="100%" height={230}>
+                      <ResponsiveContainer width="100%" height={210}>
                         <LineChart data={activeAnalysis.projections}>
                           <CartesianGrid stroke="rgba(255,255,255,0.05)" />
                           <XAxis dataKey="month" stroke="#71717A" fontSize={11} />
@@ -540,7 +592,7 @@ function ProjectInputPage() {
 
                     {/* Bento Tile 2: Risk Profile Breakdown */}
                     <ChartCard title="Risk Profile Breakdown" icon={AlertTriangle}>
-                      <ResponsiveContainer width="100%" height={230}>
+                      <ResponsiveContainer width="100%" height={210}>
                         <BarChart data={activeAnalysis.risks} layout="vertical" margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                           <CartesianGrid stroke="rgba(255,255,255,0.05)" />
                           <XAxis type="number" domain={[0, 100]} stroke="#71717A" fontSize={11} />
