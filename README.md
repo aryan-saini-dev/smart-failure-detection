@@ -1,3 +1,11 @@
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="Assets/Smart%20Logo%20White.png">
+  <source media="(prefers-color-scheme: light)" srcset="Assets/Smart%20Logo%20Black.png">
+  <img alt="Smart Failure Detection Logo" src="Assets/Smart%20Logo%20White.png" width="180" />
+</picture>
+
 # 🚀 Smart Failure Detection
 
 ### *AI-Powered Startup Failure Prediction & Market Intelligence Platform*
@@ -13,6 +21,8 @@
 [![Render](https://img.shields.io/badge/Render-Docker%20Backend-46E3B7?logo=render&logoColor=white)](https://render.com/)
 [![Vercel](https://img.shields.io/badge/Vercel-Frontend%20Hosting-000000?logo=vercel&logoColor=white)](https://vercel.com/)
 [![License MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+</div>
 
 ---
 
@@ -36,11 +46,12 @@
 5. [🛠️ Tech Stack](#-tech-stack)
 6. [🏗️ System Architecture](#-system-architecture)
 7. [🔄 AI & Machine Learning Pipeline](#-ai--machine-learning-pipeline)
-8. [📦 Installation & Setup](#-installation--setup)
-9. [🚀 Quick Start](#-quick-start)
-10. [🌐 Production Deployment](#-production-deployment)
-11. [📁 Repository Structure](#-repository-structure)
-12. [📄 License & Credits](#-license--credits)
+8. [📊 Dataset & Machine Learning Performance](#-dataset--machine-learning-performance)
+9. [📦 Installation & Setup](#-installation--setup)
+10. [🚀 Quick Start](#-quick-start)
+11. [🌐 Production Deployment](#-production-deployment)
+12. [📁 Repository Structure](#-repository-structure)
+13. [📄 License & Credits](#-license--credits)
 
 ---
 
@@ -48,7 +59,7 @@
 
 **Smart Failure Detection** is an intelligent, full-stack decision-support workspace designed to help entrepreneurs, venture capitalists, and product teams quantitatively and qualitatively evaluate the viability of early-stage startups.
 
-By combining the predictive power of a **custom Machine Learning model** (trained on 48,000+ historical startup outcomes) with the real-time reasoning of **Google Gemini 2.5 Flash**, the platform acts as an automated venture due diligence analyst.
+By combining the predictive power of a **custom Machine Learning model** (trained on 66,000+ historical startup outcomes from the [Crunchbase Startup Success/Fail Dataset on Kaggle](https://www.kaggle.com/datasets/yanmaksi/big-startup-secsees-fail-dataset-from-crunchbase)) with the real-time reasoning of **Google Gemini 2.5 Flash**, the platform acts as an automated venture due diligence analyst.
 
 ### 🎯 What We Deliver
 - 🧠 **Statistical Failure & Success Probability**: Exact risk probabilities calculated from historical Crunchbase venture data.
@@ -206,7 +217,7 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 | 📊 **Analysis Engine** | Projections, industry CAGR growth, and risk rule calculations | `src/lib/analysis.ts` |
 | 🤖 **AI & ML Orchestrator** | Gemini API integration, ML feature extraction & process spawning | `server/index.js` |
 | 🧠 **ML Predictor** | Machine learning inference via XGBoost decision trees | `server/ml/predict.py` |
-| 📈 **Model Training** | Model training & optimization on 48k Crunchbase startup records | `Dataset/train_model.py` |
+| 📈 **Model Training** | Model training & optimization on 66k+ Kaggle Crunchbase records | `Dataset/train_model.py` |
 | 🗄️ **Database Client** | Supabase PostgreSQL client & authentication operations | `src/lib/supabase.ts` |
 | ⚡ **API Client** | Local & production backend communication bridge | `src/lib/local-api.ts` |
 | 👤 **Demo Session** | Local guest session & sample startup generator | `src/lib/demo-session.ts` |
@@ -248,6 +259,40 @@ graph TD
     style UI fill:#3B82F6,stroke:#1D4ED8,stroke-width:3px,color:#fff
     style DB fill:#10B981,stroke:#047857,stroke-width:2px,color:#fff
 ```
+
+---
+
+## 📊 Dataset & Machine Learning Performance
+
+The quantitative failure prediction engine is trained on real-world historical startup data to identify systemic risk signals and calculate survival probability.
+
+### 📁 Training Dataset
+- **Dataset Source**: [Big Startup Success/Fail Dataset from Crunchbase (Kaggle)](https://www.kaggle.com/datasets/yanmaksi/big-startup-secsees-fail-dataset-from-crunchbase)
+- **Total Records**: 66,368 Crunchbase company profiles.
+- **Filtered Training Cohort**: ~13,334 startups with definitive finalized outcomes (`closed`, `acquired`, or `ipo`), avoiding survivorship bias and active-state ambiguities.
+- **Target Variable**: `is_success` (Binary: `1` for `acquired`/`ipo`, `0` for `closed`).
+- **Class Balance**: 53% Success vs. 47% Failure (stratified 80/20 train/test split).
+
+### ⚙️ Feature Engineering & Preprocessing
+The model extracts and evaluates 7 critical venture signals:
+1. **`funding_total_usd`**: Total capital raised in USD (median-imputed & standardized via `StandardScaler`).
+2. **`funding_rounds`**: Total investment rounds completed.
+3. **`funding_duration`**: Velocity/time span between initial and final funding rounds (in days).
+4. **`time_to_first_funding`**: Time elapsed between startup founding date and initial funding (in days).
+5. **`category_count`**: Number of operating industry categories (proxy for product focus vs. breadth).
+6. **`country_code`**: Geographic jurisdiction (Target Encoded to preserve regional predictive power without matrix sparsity).
+7. **`main_category`**: Primary market vertical across 500+ distinct sectors (Target Encoded).
+
+### 🏆 Model Architecture & Evaluation Metrics
+Trained with an **Optimized XGBoost Classifier (`XGBClassifier`)** pipeline featuring 3-fold stratified `GridSearchCV` hyperparameter tuning (`n_estimators: 200`, `max_depth: 5`, `learning_rate: 0.05`, `eval_metric: logloss`).
+
+| Metric | Score | Baseline (Random Forest) | Description |
+| :--- | :---: | :---: | :--- |
+| **Accuracy** | **~75.3%** | 72.6% | Overall classification accuracy on 20% stratified holdout test set |
+| **F1-Score (Failure / Class 0)** | **0.72** | 0.69 | High precision/recall in detecting high-risk distressed ventures |
+| **F1-Score (Success / Class 1)** | **0.78** | 0.75 | Strong sensitivity in identifying viable acquisition/IPO trajectories |
+| **Macro Average F1** | **0.75** | 0.72 | Unweighted mean F1 across both failure and success classes |
+| **Weighted Average F1** | **0.75** | 0.73 | Support-weighted average F1 across all evaluated outcomes |
 
 ---
 
@@ -377,32 +422,33 @@ npm run dev
 
 ```
 smart-failure-detection/
-├── Dataset/                           # ML Training & Research
-│   ├── startup_failure_prediction.csv # 48,000+ Startup Dataset
-│   ├── train_model.py                 # Training script for XGBoost & Random Forest
-│   ├── startup_model_optimized.joblib # Serialized inference pipeline
-│   └── dataset_documentation.md       # Statistical documentation
-├── server/                            # Backend Engine
-│   ├── index.js                       # Node.js HTTP API & Gemini integration
+├── Dataset/                                # ML Training & Research
+│   ├── big_startup_secsees_dataset.csv     # 66k+ Crunchbase Dataset (Kaggle)
+│   ├── startup-success-fail-eda.ipynb      # Exploratory data analysis notebook
+│   ├── train_model.py                      # Training & hyperparameter tuning pipeline
+│   ├── startup_model_optimized.joblib      # Serialized production inference pipeline
+│   └── dataset_documentation.md            # Statistical summary & benchmark metrics
+├── server/                                 # Backend Engine
+│   ├── index.js                            # Node.js HTTP API & Gemini integration
 │   └── ml/
-│       └── predict.py                 # Python ML inference bridge
-├── src/                               # Frontend Application (React 19)
-│   ├── components/                    # UI Components & Aurora Canvas
+│       └── predict.py                      # Python ML inference bridge
+├── src/                                    # Frontend Application (React 19)
+│   ├── components/                         # UI Components & Aurora Canvas
 │   ├── lib/
-│   │   ├── analysis.ts                # Financial algorithms & type definitions
-│   │   ├── local-api.ts               # Backend API client
-│   │   └── supabase.ts                # Supabase SDK client
-│   └── routes/                        # TanStack Router Pages
-│       ├── index.tsx                  # Landing Page
-│       ├── login.tsx                  # Authentication & Guest Demo
-│       ├── project-input.tsx          # Startup Analysis Form & Dashboard
-│       ├── profile.tsx                # Saved Assessment History
+│   │   ├── analysis.ts                     # Financial algorithms & type definitions
+│   │   ├── local-api.ts                    # Backend API client
+│   │   └── supabase.ts                     # Supabase SDK client
+│   └── routes/                             # TanStack Router Pages
+│       ├── index.tsx                       # Landing Page
+│       ├── login.tsx                       # Authentication & Guest Demo
+│       ├── project-input.tsx               # Startup Analysis Form & Dashboard
+│       ├── profile.tsx                     # Saved Assessment History
 │       └── projects/
-│           └── $projectId.tsx         # Detailed Project View
-├── Dockerfile                         # Production Docker container for Render
-├── package.json                       # Node dependencies
-├── requirements.txt                   # Python ML dependencies
-└── vite.config.ts                     # Vite + Nitro configuration
+│           └── $projectId.tsx              # Detailed Project View
+├── Dockerfile                              # Production Docker container for Render
+├── package.json                            # Node dependencies
+├── requirements.txt                        # Python ML dependencies
+└── vite.config.ts                          # Vite + Nitro configuration
 ```
 
 ---
