@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -21,6 +21,7 @@ import {
   BookmarkCheck,
   Building2,
   CheckCircle2,
+  ChevronDown,
   Compass,
   Cpu,
   Dice5,
@@ -60,14 +61,21 @@ import {
 import Aurora from "@/components/Aurora";
 
 export const Route = createFileRoute("/project-input")({
-  validateSearch: (search: Record<string, unknown>) => {
+  validateSearch: (search: Record<string, unknown>): Partial<{
+    name: string;
+    industry: string;
+    business_model: string;
+    target_market: string;
+    budget: number;
+    description: string;
+  }> => {
     return {
-      name: (search.name as string) || "",
-      industry: (search.industry as string) || "",
-      business_model: (search.business_model as string) || "",
-      target_market: (search.target_market as string) || "",
-      budget: Number(search.budget) || 0,
-      description: (search.description as string) || "",
+      name: (search.name as string) || undefined,
+      industry: (search.industry as string) || undefined,
+      business_model: (search.business_model as string) || undefined,
+      target_market: (search.target_market as string) || undefined,
+      budget: search.budget !== undefined ? Number(search.budget) : undefined,
+      description: (search.description as string) || undefined,
     };
   },
   head: () => ({
@@ -143,7 +151,7 @@ function ProjectInputPage() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<Project | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [tab, setTab] = useState<"overview" | "competitors" | "risk" | "market" | "suggestions">("overview");
+  const [tab, setTab] = useState<"overview" | "competitors" | "risk" | "market" | "suggestions" | "swot" | "feasibility">("overview");
   const [mobileView, setMobileView] = useState<"form" | "analysis">("form");
 
   const [liveAnalysis, setLiveAnalysis] = useState<any>(null);
@@ -154,7 +162,8 @@ function ProjectInputPage() {
     getCurrentUser().then(({ user }) => setCurrentUser(user));
   }, []);
 
-  const activeAnalysis = saved?.analysis_data || liveAnalysis;
+  const rawAnalysis = saved?.analysis_data || liveAnalysis;
+  const activeAnalysis = useMemo(() => (rawAnalysis ? computeAnalysis(rawAnalysis) : null), [rawAnalysis]);
   const activeProjectName = saved?.name || analyzedForm?.name || form.name.trim() || "Live Analysis";
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -510,20 +519,18 @@ function ProjectInputPage() {
             <EmptyAnalysis />
           ) : (
             <div className="flex flex-col h-full gap-3 sm:gap-4">
-              <header className="glass-card p-4 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-                  <h2 className="font-display text-lg sm:text-xl font-semibold tracking-tight">{activeProjectName}</h2>
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-medium text-amber-300">
-                    <Sparkles className="h-3 w-3 text-amber-400" />
+              <header className="glass-card p-3.5 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 w-full min-w-0 overflow-hidden">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
+                  <h2 className="font-display text-base sm:text-xl font-semibold tracking-tight truncate">{activeProjectName}</h2>
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 sm:px-2.5 py-0.5 text-[10px] sm:text-[11px] font-medium text-amber-300 shrink-0">
+                    <Sparkles className="h-3 w-3 text-amber-400 shrink-0" />
                     <span>Live Market Research Active</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 text-center sm:text-left sm:flex sm:items-center sm:gap-5 border-t sm:border-t-0 border-white/5 pt-2.5 sm:pt-0 text-xs text-[color:var(--muted-foreground)]">
+                <div className="grid grid-cols-3 gap-2 text-center sm:text-left sm:flex sm:items-center sm:gap-5 border-t sm:border-t-0 border-white/10 pt-2.5 sm:pt-0 w-full sm:w-auto shrink-0">
                   <Stat label="Growth" value={`${activeAnalysis.growth}%`} accent />
-                  <div className="h-4 w-px bg-white/10 hidden sm:block" />
                   <Stat label="Risk" value={`${activeAnalysis.overallRisk}/100`} />
-                  <div className="h-4 w-px bg-white/10 hidden sm:block" />
                   <Stat
                     label="Budget"
                     value={formatCurrency(
@@ -534,22 +541,51 @@ function ProjectInputPage() {
                 </div>
               </header>
 
-              <div className="flex gap-1.5 p-1 glass-card overflow-x-auto scrollbar-none snap-x">
+              {/* Mobile Dropdown Select (Visible on Phone < 640px) */}
+              <div className="sm:hidden w-full glass-card p-1.5 border border-white/10 rounded-xl relative">
+                <div className="relative flex items-center">
+                  <select
+                    value={tab}
+                    onChange={(e) => setTab(e.target.value as typeof tab)}
+                    className="w-full appearance-none rounded-lg bg-[color:var(--accent)]/15 border border-[color:var(--accent)]/30 px-3.5 py-2.5 pr-10 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  >
+                    {[
+                      { id: "overview", label: "Overview" },
+                      { id: "risk", label: "Risk Engine" },
+                      { id: "swot", label: "SWOT Analysis" },
+                      { id: "feasibility", label: "Feasibility" },
+                      { id: "competitors", label: "Competitors" },
+                      { id: "market", label: "Market" },
+                      { id: "suggestions", label: "Suggestions" },
+                    ].map((t) => (
+                      <option key={t.id} value={t.id} className="bg-[color:var(--background-alt)] text-white">
+                        {t.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 h-4 w-4 text-[color:var(--accent)]" />
+                </div>
+              </div>
+
+              {/* Desktop Pill Tab Bar (Visible on Screens >= 640px) */}
+              <div className="hidden sm:flex gap-1.5 p-1 glass-card overflow-x-auto scrollbar-none snap-x max-w-full touch-pan-x">
                 {(
                   [
-                    { id: "overview", label: "Revenue & Risk" },
+                    { id: "overview", label: "Overview" },
+                    { id: "risk", label: "Risk Engine" },
+                    { id: "swot", label: "SWOT Analysis" },
+                    { id: "feasibility", label: "Feasibility" },
                     { id: "competitors", label: "Competitors" },
-                    { id: "risk", label: "Risk breakdown" },
-                    { id: "market", label: "Market segments" },
+                    { id: "market", label: "Market" },
                     { id: "suggestions", label: "Suggestions" },
                   ] as const
                 ).map((t) => (
                   <button
                     key={t.id}
                     onClick={() => setTab(t.id)}
-                    className={`whitespace-nowrap shrink-0 sm:shrink sm:flex-1 rounded-md px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] ${tab === t.id
-                      ? "bg-[color:var(--accent)]/15 text-[color:var(--foreground)] shadow-[0_0_20px_rgba(245,158,11,0.15)]"
-                      : "text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)]"
+                    className={`whitespace-nowrap shrink-0 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] ${tab === t.id
+                      ? "bg-[color:var(--accent)]/20 text-white border border-[color:var(--accent)]/30 shadow-[0_0_15px_rgba(245,158,11,0.2)] font-semibold"
+                      : "text-[color:var(--muted-foreground)] hover:text-white hover:bg-white/5"
                       }`}
                   >
                     {t.label}
@@ -569,29 +605,31 @@ function ProjectInputPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
                     {/* Bento Tile 1: 6-Month Revenue Projection */}
                     <ChartCard title="6-Month Revenue Projection" icon={TrendingUp}>
-                      <ResponsiveContainer width="100%" height={210}>
-                        <LineChart data={activeAnalysis.projections}>
-                          <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                          <XAxis dataKey="month" stroke="#71717A" fontSize={11} />
-                          <YAxis stroke="#71717A" fontSize={11} />
-                          <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                          <Line
-                            type="monotone"
-                            dataKey="revenue"
-                            stroke="#F59E0B"
-                            strokeWidth={2.5}
-                            dot={{ r: 3.5, fill: "#F59E0B" }}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="cost"
-                            stroke="#71717A"
-                            strokeWidth={1.5}
-                            strokeDasharray="4 4"
-                            dot={false}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
+                      <div className="w-full min-w-0 overflow-hidden h-[210px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={activeAnalysis.projections}>
+                            <CartesianGrid stroke="rgba(255,255,255,0.05)" />
+                            <XAxis dataKey="month" stroke="#71717A" fontSize={11} />
+                            <YAxis stroke="#71717A" fontSize={11} />
+                            <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
+                            <Line
+                              type="monotone"
+                              dataKey="revenue"
+                              stroke="#F59E0B"
+                              strokeWidth={2.5}
+                              dot={{ r: 3.5, fill: "#F59E0B" }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="cost"
+                              stroke="#71717A"
+                              strokeWidth={1.5}
+                              strokeDasharray="4 4"
+                              dot={false}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
                     </ChartCard>
 
                     {/* Bento Tile 2: Risk Profile Breakdown */}
@@ -685,9 +723,9 @@ function ProjectInputPage() {
               })()}
 
               {tab === "competitors" && (
-                <div className="glass-card p-4 sm:p-6 flex-1 flex flex-col justify-between">
+                <div className="glass-card p-3.5 sm:p-6 flex-1 flex flex-col justify-between w-full min-w-0 overflow-hidden">
                   <div>
-                    <h3 className="font-display text-base sm:text-lg font-semibold">Competitor Landscape</h3>
+                    <h3 className="font-display text-base sm:text-lg font-semibold truncate">Competitor Landscape</h3>
                     <p className="mt-1 text-xs text-[color:var(--muted-foreground)]">
                       Estimated market positioning against{" "}
                       <span className="text-[color:var(--foreground)] font-medium">
@@ -695,33 +733,33 @@ function ProjectInputPage() {
                       </span>{" "}
                       incumbents.
                     </p>
-                    <div className="mt-4 sm:mt-5 divide-y divide-white/5">
+                    <div className="mt-4 sm:mt-5 divide-y divide-white/5 w-full min-w-0">
                       {activeAnalysis.competitors.map((c: any) => (
                         <div
                           key={c.name}
-                          className="grid gap-3 py-3 md:grid-cols-[1fr_2fr_auto] md:items-center"
+                          className="grid gap-3 py-3 md:grid-cols-[1fr_2fr_auto] md:items-center w-full min-w-0"
                         >
-                          <div>
-                            <p className="font-display font-semibold text-sm">{c.name}</p>
+                          <div className="min-w-0">
+                            <p className="font-display font-semibold text-sm truncate">{c.name}</p>
                             <p className="mt-0.5 text-xs text-[color:var(--muted-foreground)]">
                               {c.marketShare}% market · {c.overlap}% overlap
                             </p>
                           </div>
-                          <div className="grid gap-2 text-xs sm:grid-cols-2">
-                            <div>
+                          <div className="grid gap-2 text-xs sm:grid-cols-2 min-w-0 w-full">
+                            <div className="min-w-0">
                               <p className="text-[11px] font-medium text-emerald-400">
                                 Strength
                               </p>
-                              <p className="text-[color:var(--foreground)]/90">{c.strength}</p>
+                              <p className="text-[color:var(--foreground)]/90 break-words leading-relaxed">{c.strength}</p>
                             </div>
-                            <div>
+                            <div className="min-w-0">
                               <p className="text-[11px] font-medium text-red-400">
                                 Weakness
                               </p>
-                              <p className="text-[color:var(--foreground)]/90">{c.weakness}</p>
+                              <p className="text-[color:var(--foreground)]/90 break-words leading-relaxed">{c.weakness}</p>
                             </div>
                           </div>
-                          <div className="h-2 w-full md:w-28 overflow-hidden rounded-full bg-white/5">
+                          <div className="h-2 w-full md:w-28 overflow-hidden rounded-full bg-white/5 shrink-0">
                             <div
                               className="h-full rounded-full bg-gradient-to-r from-[color:var(--accent)] to-amber-300"
                               style={{ width: `${c.overlap}%` }}
@@ -735,68 +773,46 @@ function ProjectInputPage() {
               )}
 
               {tab === "risk" && (
-                <div className="grid gap-3.5 sm:gap-4 grid-cols-1 md:grid-cols-2 flex-1">
-                  {activeAnalysis.risks.map((r: any) => (
-                    <div key={r.category} className="glass-card p-4 sm:p-5 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <p className="font-display text-sm sm:text-base font-semibold">{r.category}</p>
-                          <span
-                            className={`rounded-md px-2.5 py-0.5 text-xs font-semibold ${r.score > 65
-                              ? "bg-red-500/15 text-red-300 border border-red-500/25"
-                              : r.score > 45
-                                ? "bg-amber-500/15 text-amber-300 border border-amber-500/25"
-                                : "bg-emerald-500/15 text-emerald-300 border border-emerald-500/25"
-                              }`}
-                          >
-                            {r.score}/100
-                          </span>
-                        </div>
-                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/5">
-                          <div
-                            className={`h-full rounded-full ${r.score > 65
-                              ? "bg-red-500"
-                              : r.score > 45
-                                ? "bg-[color:var(--accent)]"
-                                : "bg-emerald-500"
-                              }`}
-                            style={{ width: `${r.score}%` }}
-                          />
-                        </div>
-                      </div>
-                      <p className="mt-3 text-xs leading-relaxed text-[color:var(--muted-foreground)]">{r.note}</p>
-                    </div>
-                  ))}
-                </div>
+                <EnhancedRiskEngineView risks={activeAnalysis.risks} overallRisk={activeAnalysis.overallRisk} />
+              )}
+
+              {tab === "swot" && activeAnalysis.swot && (
+                <SwotView swot={activeAnalysis.swot} />
+              )}
+
+              {tab === "feasibility" && activeAnalysis.feasibility && (
+                <FeasibilityView feasibility={activeAnalysis.feasibility} />
               )}
 
               {tab === "market" && (
-                <div className="grid gap-3.5 sm:gap-5 grid-cols-1 md:grid-cols-2 flex-1">
+                <div className="grid gap-3.5 sm:gap-5 grid-cols-1 md:grid-cols-2 flex-1 w-full min-w-0 overflow-hidden">
                   <ChartCard title="Adoption Segments" icon={Users}>
-                    <ResponsiveContainer width="100%" height={240}>
-                      <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-                        <Pie
-                          data={activeAnalysis.marketSegments}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="40%"
-                          innerRadius={40}
-                          outerRadius={70}
-                          paddingAngle={4}
-                        >
-                          {activeAnalysis.marketSegments.map((_: any, i: number) => (
-                            <Cell key={i} fill={["#F59E0B", "#fbbf24", "#71717A", "#3f3f46"][i % 4]} />
-                          ))}
-                        </Pie>
-                        <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                        <Legend
-                          verticalAlign="bottom"
-                          align="center"
-                          wrapperStyle={{ paddingTop: "14px", fontSize: 11, color: "#A1A1AA" }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
+                    <div className="w-full min-w-0 overflow-hidden h-[220px] sm:h-[240px] flex items-center justify-center">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                          <Pie
+                            data={activeAnalysis.marketSegments}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="42%"
+                            innerRadius={36}
+                            outerRadius={62}
+                            paddingAngle={4}
+                          >
+                            {activeAnalysis.marketSegments.map((_: any, i: number) => (
+                              <Cell key={i} fill={["#F59E0B", "#fbbf24", "#71717A", "#3f3f46"][i % 4]} />
+                            ))}
+                          </Pie>
+                          <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
+                          <Legend
+                            verticalAlign="bottom"
+                            align="center"
+                            wrapperStyle={{ paddingTop: "6px", fontSize: 11, color: "#A1A1AA" }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
                   </ChartCard>
 
                   <div className="glass-card p-4 sm:p-6 flex flex-col justify-between">
@@ -824,14 +840,14 @@ function ProjectInputPage() {
               )}
 
               {tab === "suggestions" && (
-                <div className="glass-card p-4 sm:p-6 flex-1 flex flex-col justify-between">
+                <div className="glass-card p-3.5 sm:p-6 flex-1 flex flex-col justify-between w-full min-w-0 overflow-hidden">
                   <div>
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-3">
-                      <div className="flex items-center gap-2">
-                        <Lightbulb className="h-4 w-4 sm:h-5 sm:w-5 text-[color:var(--accent)]" />
-                        <h3 className="font-display text-base sm:text-lg font-semibold">Strategic Recommendations</h3>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Lightbulb className="h-4 w-4 sm:h-5 sm:w-5 text-[color:var(--accent)] shrink-0" />
+                        <h3 className="font-display text-base sm:text-lg font-semibold truncate">Strategic Recommendations</h3>
                       </div>
-                      <span className="text-[11px] sm:text-xs font-semibold text-[color:var(--accent)] bg-[color:var(--accent)]/10 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-[color:var(--accent)]/30">
+                      <span className="text-[10px] sm:text-xs font-semibold text-[color:var(--accent)] bg-[color:var(--accent)]/10 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-[color:var(--accent)]/30 shrink-0">
                         Actionable Insights
                       </span>
                     </div>
@@ -839,18 +855,18 @@ function ProjectInputPage() {
                       Concise, rule-based startup guidance calculated from your budget, business model, and risk profile.
                     </p>
 
-                    <div className="mt-4 sm:mt-5 grid gap-3 sm:gap-3.5 grid-cols-1 md:grid-cols-2">
+                    <div className="mt-4 sm:mt-5 grid gap-3 sm:gap-3.5 grid-cols-1 md:grid-cols-2 w-full min-w-0">
                       {(activeAnalysis.suggestions || generateStartupSuggestions(form, activeAnalysis)).map((item: any, idx: number) => (
                         <div
                           key={idx}
-                          className="group relative rounded-xl border border-white/10 bg-white/[0.02] p-3.5 sm:p-4 backdrop-blur transition-all duration-200 hover:border-white/20 hover:bg-white/[0.04]"
+                          className="group relative rounded-xl border border-white/10 bg-white/[0.02] p-3.5 sm:p-4 backdrop-blur transition-all duration-200 hover:border-white/20 hover:bg-white/[0.04] w-full min-w-0"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="font-display text-xs sm:text-sm font-semibold text-[color:var(--foreground)]">
+                            <span className="font-display text-xs sm:text-sm font-semibold text-[color:var(--foreground)] truncate">
                               {item.title}
                             </span>
                             <span
-                              className={`rounded-full px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold capitalize ${item.priority === "high"
+                              className={`rounded-full px-2 py-0.5 text-[9px] sm:text-[11px] font-semibold capitalize shrink-0 ${item.priority === "high"
                                 ? "border border-red-500/30 bg-red-500/10 text-red-300"
                                 : item.priority === "medium"
                                   ? "border border-amber-500/30 bg-amber-500/10 text-amber-300"
@@ -860,7 +876,7 @@ function ProjectInputPage() {
                               {item.priority} priority
                             </span>
                           </div>
-                          <p className="mt-2 text-xs leading-relaxed text-[color:var(--muted-foreground)] group-hover:text-[color:var(--foreground)]/90">
+                          <p className="mt-2 text-xs leading-relaxed text-[color:var(--muted-foreground)] group-hover:text-[color:var(--foreground)]/90 break-words">
                             {item.advice}
                           </p>
                         </div>
@@ -903,12 +919,12 @@ function Field({
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div>
-      <p className="font-sans text-[11px] font-medium text-[color:var(--muted-foreground)]">
+    <div className="min-w-0">
+      <p className="font-sans text-[10px] sm:text-[11px] font-medium text-[color:var(--muted-foreground)] uppercase tracking-wider truncate">
         {label}
       </p>
       <p
-        className={`mt-0.5 font-display text-lg font-semibold ${accent ? "text-[color:var(--accent)]" : "text-[color:var(--foreground)]"
+        className={`mt-0.5 font-display text-xs sm:text-base font-semibold truncate ${accent ? "text-[color:var(--accent)]" : "text-[color:var(--foreground)]"
           }`}
       >
         {value}
@@ -927,14 +943,14 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="glass-card p-5 flex flex-col justify-between">
-      <div className="mb-3 flex items-center gap-2">
-        <Icon className="h-4 w-4 text-[color:var(--accent)]" strokeWidth={1.5} />
-        <h3 className="font-display text-sm font-semibold tracking-wide text-[color:var(--foreground)]">
+    <div className="glass-card p-3.5 sm:p-5 flex flex-col justify-between w-full min-w-0 overflow-hidden">
+      <div className="mb-3 flex items-center gap-2 min-w-0">
+        <Icon className="h-4 w-4 text-[color:var(--accent)] shrink-0" strokeWidth={1.5} />
+        <h3 className="font-display text-sm font-semibold tracking-wide text-[color:var(--foreground)] truncate">
           {title}
         </h3>
       </div>
-      <div className="flex-1">{children}</div>
+      <div className="flex-1 w-full min-w-0 overflow-hidden">{children}</div>
     </div>
   );
 }
@@ -1059,6 +1075,255 @@ function CreativeAiRadarLoader({ projectName, industry }: { projectName: string;
       {/* Signal Bar */}
       <div className="mt-8 h-1.5 w-48 overflow-hidden rounded-full bg-white/5">
         <div className="h-full rounded-full bg-gradient-to-r from-amber-500 via-amber-300 to-amber-500 animate-pulse" style={{ width: "70%" }} />
+      </div>
+    </div>
+  );
+}
+
+function SwotView({ swot }: { swot: NonNullable<import("@/lib/analysis").AnalysisResult["swot"]> }) {
+  const quadrants = [
+    {
+      title: "Strengths",
+      subtitle: "Internal Competitive Advantages",
+      items: swot.strengths,
+      accent: "text-emerald-400",
+      badgeCls: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+      bgCls: "bg-emerald-950/10 border-emerald-500/20",
+      icon: CheckCircle2,
+    },
+    {
+      title: "Weaknesses",
+      subtitle: "Internal Resource Constraints",
+      items: swot.weaknesses,
+      accent: "text-rose-400",
+      badgeCls: "bg-rose-500/15 text-rose-300 border-rose-500/30",
+      bgCls: "bg-rose-950/10 border-rose-500/20",
+      icon: AlertTriangle,
+    },
+    {
+      title: "Opportunities",
+      subtitle: "External Market Growth Vectors",
+      items: swot.opportunities,
+      accent: "text-sky-400",
+      badgeCls: "bg-sky-500/15 text-sky-300 border-sky-500/30",
+      bgCls: "bg-sky-950/10 border-sky-500/20",
+      icon: Sparkles,
+    },
+    {
+      title: "Threats",
+      subtitle: "External Market & Rival Headwinds",
+      items: swot.threats,
+      accent: "text-amber-400",
+      badgeCls: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+      bgCls: "bg-amber-950/10 border-amber-500/20",
+      icon: Target,
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 flex-1 w-full min-w-0 overflow-hidden">
+      {quadrants.map((q) => {
+        const Icon = q.icon;
+        return (
+          <div key={q.title} className={`glass-card p-3.5 sm:p-5 border ${q.bgCls} flex flex-col justify-between w-full min-w-0 overflow-hidden`}>
+            <div>
+              <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2.5 sm:pb-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Icon className={`h-4 w-4 sm:h-5 sm:w-5 shrink-0 ${q.accent}`} />
+                  <div className="min-w-0">
+                    <h3 className="font-display text-sm sm:text-base font-semibold tracking-tight text-[color:var(--foreground)] truncate">{q.title}</h3>
+                    <p className="text-[10px] sm:text-[11px] text-[color:var(--muted-foreground)] truncate">{q.subtitle}</p>
+                  </div>
+                </div>
+                <span className={`shrink-0 text-[9px] sm:text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border ${q.badgeCls}`}>
+                  {q.items.length} Points
+                </span>
+              </div>
+              <ul className="mt-3 sm:mt-4 space-y-2 sm:space-y-2.5">
+                {q.items.map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-xs text-[color:var(--foreground)]/90 leading-relaxed min-w-0 w-full">
+                    <span className={`mt-1.5 h-1.5 w-1.5 rounded-full shrink-0 ${q.accent.replace("text-", "bg-")}`} />
+                    <div className="flex-1 min-w-0 break-words">
+                      <span className="break-words">{item.text}</span>
+                      {item.category && (
+                        <span className="ml-1.5 inline-block text-[10px] font-mono uppercase text-[color:var(--muted-foreground)] opacity-75">
+                          • {item.category}
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function FeasibilityView({ feasibility }: { feasibility: NonNullable<import("@/lib/analysis").AnalysisResult["feasibility"]> }) {
+  const pillars = [
+    { title: "Technical Feasibility", data: feasibility.technical, icon: Cpu },
+    { title: "Financial Feasibility", data: feasibility.financial, icon: DollarSign },
+    { title: "Market Feasibility", data: feasibility.market, icon: TrendingUp },
+    { title: "Operational Feasibility", data: feasibility.operational, icon: Compass },
+  ];
+
+  const gradeColor =
+    feasibility.grade === "A+" || feasibility.grade === "A"
+      ? "text-emerald-400 border-emerald-500/40 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+      : feasibility.grade === "B"
+      ? "text-amber-400 border-amber-500/40 bg-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+      : "text-rose-400 border-rose-500/40 bg-rose-500/10 shadow-[0_0_20px_rgba(244,63,94,0.2)]";
+
+  return (
+    <div className="space-y-3 sm:space-y-4 flex-1 w-full min-w-0 overflow-hidden">
+      {/* Header Feasibility Summary Banner */}
+      <div className="glass-card p-3.5 sm:p-5 border border-white/10 bg-gradient-to-r from-white/[0.04] to-transparent flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 w-full min-w-0">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <div className={`h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl border flex items-center justify-center font-display text-xl sm:text-2xl font-bold shrink-0 ${gradeColor}`}>
+            {feasibility.grade}
+          </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <h3 className="font-display text-base sm:text-lg font-semibold tracking-tight">Project Feasibility Rating</h3>
+              <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full border border-white/15 bg-white/5 text-[color:var(--foreground)]">
+                {feasibility.status}
+              </span>
+            </div>
+            <p className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs text-[color:var(--muted-foreground)]">
+              Multi-dimensional viability score across technical, capital, market & operational pillars.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+          <div className="text-right">
+            <p className="text-[10px] font-mono uppercase text-[color:var(--muted-foreground)]">Overall Index</p>
+            <p className="font-display text-xl sm:text-2xl font-bold text-[color:var(--accent)]">{feasibility.overallScore}%</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 4 Pillars Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full min-w-0">
+        {pillars.map((p) => {
+          const Icon = p.icon;
+          const scoreColor = p.data.score >= 75 ? "bg-emerald-500" : p.data.score >= 50 ? "bg-amber-500" : "bg-rose-500";
+          return (
+            <div key={p.title} className="glass-card p-3.5 sm:p-5 flex flex-col justify-between w-full min-w-0">
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Icon className="h-4 w-4 text-[color:var(--accent)] shrink-0" />
+                    <h4 className="font-display text-xs sm:text-sm font-semibold truncate">{p.title}</h4>
+                  </div>
+                  <span className="font-mono text-xs font-bold text-[color:var(--foreground)] shrink-0">
+                    {p.data.score}/100
+                  </span>
+                </div>
+                <div className="mt-2.5 sm:mt-3 h-2 overflow-hidden rounded-full bg-white/5 w-full">
+                  <div className={`h-full rounded-full ${scoreColor}`} style={{ width: `${p.data.score}%` }} />
+                </div>
+              </div>
+              <p className="mt-2.5 sm:mt-3 text-xs text-[color:var(--muted-foreground)] leading-relaxed break-words">{p.data.statusNote}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Key Feasibility Recommendations */}
+      {feasibility.keyTakeaways && feasibility.keyTakeaways.length > 0 && (
+        <div className="glass-card p-3.5 sm:p-5 border border-white/10 w-full min-w-0">
+          <h4 className="font-display text-xs sm:text-sm font-semibold flex items-center gap-2">
+            <Lightbulb className="h-4 w-4 text-amber-400 shrink-0" />
+            Key Strategic Feasibility Guidance
+          </h4>
+          <ul className="mt-2.5 sm:mt-3 space-y-2 text-xs text-[color:var(--foreground)]/90">
+            {feasibility.keyTakeaways.map((takeaway, i) => (
+              <li key={i} className="flex items-start gap-2 min-w-0">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0 mt-1.5" />
+                <span className="break-words flex-1 min-w-0">{takeaway}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EnhancedRiskEngineView({ risks, overallRisk }: { risks: import("@/lib/analysis").RiskFactor[]; overallRisk: number }) {
+  return (
+    <div className="space-y-3 sm:space-y-4 flex-1 w-full min-w-0 overflow-hidden">
+      <div className="glass-card p-3.5 sm:p-5 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 w-full min-w-0">
+        <div>
+          <h3 className="font-display text-base sm:text-lg font-semibold tracking-tight">Risk Assessment Engine</h3>
+          <p className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs text-[color:var(--muted-foreground)]">
+            Quantitative vulnerability matrix measuring structural risk drivers & mitigations.
+          </p>
+        </div>
+        <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+          <div className="text-right">
+            <p className="text-[10px] font-mono uppercase text-[color:var(--muted-foreground)]">Composite Risk Index</p>
+            <p className={`font-display text-xl sm:text-2xl font-bold ${overallRisk > 65 ? "text-red-400" : overallRisk > 45 ? "text-amber-400" : "text-emerald-400"}`}>
+              {overallRisk}/100
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 w-full min-w-0">
+        {risks.map((r: any) => {
+          const sev = r.severity || (r.score >= 75 ? "critical" : r.score >= 55 ? "high" : r.score >= 35 ? "medium" : "low");
+          const sevBadge =
+            sev === "critical"
+              ? "bg-red-500/20 text-red-300 border-red-500/35"
+              : sev === "high"
+              ? "bg-amber-500/20 text-amber-300 border-amber-500/35"
+              : sev === "medium"
+              ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/35"
+              : "bg-emerald-500/20 text-emerald-300 border-emerald-500/35";
+
+          return (
+            <div key={r.category} className="glass-card p-3.5 sm:p-5 flex flex-col justify-between w-full min-w-0">
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <AlertTriangle className={`h-4 w-4 shrink-0 ${r.score > 65 ? "text-red-400" : r.score > 45 ? "text-amber-400" : "text-emerald-400"}`} />
+                    <p className="font-display text-xs sm:text-base font-semibold truncate">{r.category} Risk</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`rounded-md px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold uppercase border ${sevBadge}`}>
+                      {sev}
+                    </span>
+                    <span className="font-mono text-xs font-bold text-[color:var(--foreground)]">
+                      {r.score}/100
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-2.5 sm:mt-3 h-2 overflow-hidden rounded-full bg-white/5 w-full">
+                  <div
+                    className={`h-full rounded-full ${r.score > 65 ? "bg-red-500" : r.score > 45 ? "bg-[color:var(--accent)]" : "bg-emerald-500"}`}
+                    style={{ width: `${r.score}%` }}
+                  />
+                </div>
+                <p className="mt-2.5 sm:mt-3 text-xs leading-relaxed text-[color:var(--muted-foreground)] break-words">{r.note}</p>
+              </div>
+
+              {r.mitigation && (
+                <div className="mt-3 pt-3 border-t border-white/5 text-[11px] text-[color:var(--foreground)]/80 flex items-start gap-2 min-w-0">
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0 break-words">
+                    <span className="font-semibold text-emerald-400">Mitigation: </span>
+                    {r.mitigation}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

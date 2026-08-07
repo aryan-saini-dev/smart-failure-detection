@@ -36,10 +36,16 @@ export type Competitor = {
   overlap: number;
 };
 
+export type RiskSeverity = "critical" | "high" | "medium" | "low";
+
 export type RiskFactor = {
   category: string;
   score: number;
   note: string;
+  likelihood?: number; // 1 - 5
+  impact?: number; // 1 - 5
+  severity?: RiskSeverity;
+  mitigation?: string;
 };
 
 export type ProjectionPoint = {
@@ -60,6 +66,36 @@ export type SuggestionItem = {
   priority: "high" | "medium" | "low";
 };
 
+export type SwotItem = {
+  text: string;
+  impact: "high" | "medium" | "low";
+  category?: string;
+};
+
+export type SwotAnalysis = {
+  strengths: SwotItem[];
+  weaknesses: SwotItem[];
+  opportunities: SwotItem[];
+  threats: SwotItem[];
+};
+
+export type FeasibilityMetric = {
+  score: number; // 0 - 100
+  level: "High" | "Moderate" | "Low";
+  statusNote: string;
+};
+
+export type FeasibilityAssessment = {
+  overallScore: number; // 0 - 100
+  grade: "A+" | "A" | "B" | "C" | "D";
+  status: "Highly Feasible" | "Feasible with Conditions" | "High Risk / Challenging";
+  technical: FeasibilityMetric;
+  financial: FeasibilityMetric;
+  market: FeasibilityMetric;
+  operational: FeasibilityMetric;
+  keyTakeaways: string[];
+};
+
 export type AnalysisResult = {
   projections: ProjectionPoint[];
   risks: RiskFactor[];
@@ -68,6 +104,8 @@ export type AnalysisResult = {
   growth: number;
   overallRisk: number;
   suggestions?: SuggestionItem[];
+  swot?: SwotAnalysis;
+  feasibility?: FeasibilityAssessment;
   mlPrediction?: {
     prediction: "Success" | "Failure";
     failureProbability: number;
@@ -96,15 +134,49 @@ export function growthForIndustry(industry: string): number {
   return 15;
 }
 
-export function computeAnalysis(p: Project): AnalysisResult {
-  if (p.analysis_data && Array.isArray(p.analysis_data.competitors)) {
-    if (!p.analysis_data.suggestions) {
-      p.analysis_data.suggestions = generateStartupSuggestions(p, p.analysis_data);
-    }
-    return p.analysis_data;
+export function computeAnalysis(p: Project | AnalysisResult | any): AnalysisResult {
+  let result: AnalysisResult;
+  let projectObj: Project;
+
+  if (p && Array.isArray(p.competitors)) {
+    result = { ...p };
+    projectObj = {
+      name: p.name || "Project",
+      industry: p.industry || "General",
+      business_model: p.business_model || "Subscription",
+      target_market: p.target_market || "Market",
+      budget: p.budget || 50000,
+      description: p.description || "",
+    };
+  } else if (p && p.analysis_data && Array.isArray(p.analysis_data.competitors)) {
+    result = { ...p.analysis_data };
+    projectObj = p as Project;
+  } else {
+    projectObj = (p || {}) as Project;
+    result = computeRuleBasedAnalysis(projectObj);
   }
 
-  return computeRuleBasedAnalysis(p);
+  if (!result.projections || !Array.isArray(result.projections) || result.projections.length === 0) {
+    result.projections = computeRuleBasedAnalysis(projectObj).projections;
+  }
+  if (!result.suggestions) {
+    result.suggestions = generateStartupSuggestions(projectObj, result);
+  }
+  if (!result.swot || !Array.isArray(result.swot.strengths)) {
+    result.swot = generateSwotAnalysis(projectObj, result.risks || [], result.competitors || [], result.growth || 15);
+  }
+  if (!result.feasibility || typeof result.feasibility.overallScore !== "number") {
+    result.feasibility = computeFeasibilityAssessment(projectObj, result.risks || [], result.growth || 15);
+  }
+
+  return result;
+}
+
+function getRiskSeverity(score: number): RiskSeverity {
+  if (score >= 75) return "critical";
+  if (score >= 55) return "high";
+  if (score >= 35) return "medium";
+  return "low";
 }
 
 export function computeRuleBasedAnalysis(p: Project): AnalysisResult {
@@ -144,7 +216,6 @@ export function computeRuleBasedAnalysis(p: Project): AnalysisResult {
 
   // Dynamic Capital Risk based on industry requirements vs budget in USD
   const minimumCapitalUsd = isEnterprise ? 150000 : /ai|healthtech/i.test(industry) ? 100000 : 40000;
-  const minimumCapitalLocal = Math.round(minimumCapitalUsd * currencyMeta.rate);
 
   const capitalScore = Math.min(
     95,
@@ -180,11 +251,75 @@ export function computeRuleBasedAnalysis(p: Project): AnalysisResult {
     ? `High incumbent density in ${industry}; requires distinct differentiation.`
     : `Moderate market competition with room for niche entry.`;
 
+  // Technical Feasibility Risk
+  const isHighTech = /ai|healthtech|hardware|cybersecurity/i.test(industry);
+  const techRiskScore = isHighTech ? (description.length > 100 ? 45 : 70) : 30;
+  const techRiskNote = isHighTech
+    ? `Advanced technical requirements for ${industry}; specialized dev talent required.`
+    : `Standard software architecture pattern for ${industry}.`;
+
+  // Regulatory / Legal Risk
+  const isRegulated = /fintech|healthtech|edtech/i.test(industry);
+  const regRiskScore = isRegulated ? 58 : 25;
+  const regRiskNote = isRegulated
+    ? `Industry subject to compliance oversight (e.g. data privacy / financial norms).`
+    : `Minimal regulatory hurdles detected for standard market entry.`;
+
   const risks: RiskFactor[] = [
-    { category: "Market", score: marketScore, note: marketNote },
-    { category: "Capital", score: capitalScore, note: capitalNote },
-    { category: "Execution", score: executionScore, note: executionNote },
-    { category: "Competition", score: competitionScore, note: competitionNote },
+    {
+      category: "Market",
+      score: marketScore,
+      note: marketNote,
+      likelihood: Math.min(5, Math.max(1, Math.round(marketScore / 20))),
+      impact: 4,
+      severity: getRiskSeverity(marketScore),
+      mitigation: "Focus on rapid customer feedback loops and tight positioning in sub-niches.",
+    },
+    {
+      category: "Capital",
+      score: capitalScore,
+      note: capitalNote,
+      likelihood: Math.min(5, Math.max(1, Math.round(capitalScore / 20))),
+      impact: 5,
+      severity: getRiskSeverity(capitalScore),
+      mitigation: "Cap non-essential burn rate and target MVP release within initial 90 days.",
+    },
+    {
+      category: "Execution",
+      score: executionScore,
+      note: executionNote,
+      likelihood: Math.min(5, Math.max(1, Math.round(executionScore / 20))),
+      impact: 4,
+      severity: getRiskSeverity(executionScore),
+      mitigation: "Define clear bi-weekly milestones and refine product scope to core value driver.",
+    },
+    {
+      category: "Competition",
+      score: competitionScore,
+      note: competitionNote,
+      likelihood: Math.min(5, Math.max(1, Math.round(competitionScore / 20))),
+      impact: 3,
+      severity: getRiskSeverity(competitionScore),
+      mitigation: "Emphasize unique feature differentiation and superior user experience.",
+    },
+    {
+      category: "Technical",
+      score: techRiskScore,
+      note: techRiskNote,
+      likelihood: Math.min(5, Math.max(1, Math.round(techRiskScore / 20))),
+      impact: 4,
+      severity: getRiskSeverity(techRiskScore),
+      mitigation: "Use proven cloud frameworks and establish early prototype benchmarks.",
+    },
+    {
+      category: "Regulatory",
+      score: regRiskScore,
+      note: regRiskNote,
+      likelihood: Math.min(5, Math.max(1, Math.round(regRiskScore / 20))),
+      impact: 3,
+      severity: getRiskSeverity(regRiskScore),
+      mitigation: "Integrate compliance best practices and standard security headers from day 1.",
+    },
   ];
 
   const overallRisk = Math.round(risks.reduce((acc, r) => acc + r.score, 0) / risks.length);
@@ -244,7 +379,264 @@ export function computeRuleBasedAnalysis(p: Project): AnalysisResult {
 
   const result: AnalysisResult = { projections, risks, competitors, marketSegments, growth, overallRisk, mlPrediction };
   result.suggestions = generateStartupSuggestions(p, result);
+  result.swot = generateSwotAnalysis(p, result.risks, result.competitors, result.growth);
+  result.feasibility = computeFeasibilityAssessment(p, result.risks, result.growth);
   return result;
+}
+
+export function generateSwotAnalysis(
+  p: Project,
+  risks: RiskFactor[],
+  competitors: Competitor[],
+  growth: number
+): SwotAnalysis {
+  const industry = p.industry || "General";
+  const desc = p.description || "";
+  const rawBudget = Number(p.budget) || 0;
+  const currencyMeta = CURRENCY_MAP[p.currency || "USD"] || CURRENCY_MAP.USD;
+  const budgetUsd = rawBudget / currencyMeta.rate;
+
+  const strengths: SwotItem[] = [];
+  const weaknesses: SwotItem[] = [];
+  const opportunities: SwotItem[] = [];
+  const threats: SwotItem[] = [];
+
+  // STRENGTHS
+  if (growth >= 20) {
+    strengths.push({
+      text: `High market tailwinds in ${industry} with ${growth}% projected annual growth.`,
+      impact: "high",
+      category: "Market Growth",
+    });
+  } else {
+    strengths.push({
+      text: `Stable baseline demand trajectory in established ${industry} domain.`,
+      impact: "medium",
+      category: "Market Stability",
+    });
+  }
+
+  if (p.target_market && p.target_market.length > 15) {
+    strengths.push({
+      text: `Well-defined niche target market (${p.target_market}), reducing GTM acquisition waste.`,
+      impact: "high",
+      category: "Targeting",
+    });
+  } else {
+    strengths.push({
+      text: `Broad potential market addressability across consumer and business segments.`,
+      impact: "medium",
+      category: "Addressability",
+    });
+  }
+
+  if (desc.length > 100) {
+    strengths.push({
+      text: `Clear execution blueprint and detailed value proposition outlined in project brief.`,
+      impact: "high",
+      category: "Strategy Depth",
+    });
+  }
+
+  if (budgetUsd >= 100000) {
+    strengths.push({
+      text: `Substantial seed budget (${formatCurrency(budgetUsd, "USD")}) providing extended 12+ month runway.`,
+      impact: "high",
+      category: "Financial Runway",
+    });
+  }
+
+  if (strengths.length < 3) {
+    strengths.push({
+      text: `Agile startup structure allowing rapid iteration over legacy market incumbents.`,
+      impact: "medium",
+      category: "Agility",
+    });
+  }
+
+  // WEAKNESSES
+  if (budgetUsd < 50000) {
+    weaknesses.push({
+      text: `Constrained budget (${formatCurrency(budgetUsd, "USD")}) limiting early paid marketing & tech scaling.`,
+      impact: "high",
+      category: "Capital Constraint",
+    });
+  }
+
+  if (desc.length < 60) {
+    weaknesses.push({
+      text: `High-level project scope needs deeper specification on technical moat & onboarding.`,
+      impact: "high",
+      category: "Scope Definition",
+    });
+  }
+
+  const capitalRisk = risks.find((r) => r.category === "Capital");
+  if (capitalRisk && capitalRisk.score > 60) {
+    weaknesses.push({
+      text: `Elevated capital risk score (${capitalRisk.score}/100) requires tight monthly cash flow governance.`,
+      impact: "high",
+      category: "Cash Burn",
+    });
+  }
+
+  if (weaknesses.length < 3) {
+    weaknesses.push({
+      text: `Early brand awareness deficit relative to dominant market players.`,
+      impact: "medium",
+      category: "Brand Authority",
+    });
+  }
+
+  // OPPORTUNITIES
+  opportunities.push({
+    text: `Capitalize on incumbent weaknesses (e.g. legacy tech, complex pricing) with a streamlined solution.`,
+    impact: "high",
+    category: "Disruption",
+  });
+
+  if (/saas|ai|fintech/i.test(industry)) {
+    opportunities.push({
+      text: `Expand product offering via API integrations and automated self-service onboarding.`,
+      impact: "high",
+      category: "Product Expansion",
+    });
+  }
+
+  opportunities.push({
+    text: `Leverage content-led and product-led growth (PLG) channels to lower CAC.`,
+    impact: "medium",
+    category: "Distribution",
+  });
+
+  opportunities.push({
+    text: `Establish strategic channel partnerships in ${p.target_market || "target verticals"}.`,
+    impact: "medium",
+    category: "Partnerships",
+  });
+
+  // THREATS
+  const compRisk = risks.find((r) => r.category === "Competition");
+  if (compRisk && compRisk.score > 55) {
+    threats.push({
+      text: `Aggressive response or feature duplication from well-capitalized industry leaders.`,
+      impact: "high",
+      category: "Competitor Response",
+    });
+  } else {
+    threats.push({
+      text: `Emergence of new low-cost competitors entering the ${industry} space.`,
+      impact: "medium",
+      category: "New Entrants",
+    });
+  }
+
+  if (/fintech|healthtech/i.test(industry)) {
+    threats.push({
+      text: `Tightening data privacy & regulatory compliance frameworks adding unexpected overhead.`,
+      impact: "high",
+      category: "Regulatory Shift",
+    });
+  } else {
+    threats.push({
+      text: `Macroeconomic friction affecting enterprise and consumer software purchasing budgets.`,
+      impact: "medium",
+      category: "Macroeconomic",
+    });
+  }
+
+  threats.push({
+    text: `Rising digital advertising costs (CAC) inflating customer acquisition expenses.`,
+    impact: "medium",
+    category: "Customer Acquisition",
+  });
+
+  return { strengths, weaknesses, opportunities, threats };
+}
+
+export function computeFeasibilityAssessment(
+  p: Project,
+  risks: RiskFactor[],
+  growth: number
+): FeasibilityAssessment {
+  const industry = p.industry || "General";
+  const desc = p.description || "";
+  const rawBudget = Number(p.budget) || 0;
+  const currencyMeta = CURRENCY_MAP[p.currency || "USD"] || CURRENCY_MAP.USD;
+  const budgetUsd = rawBudget / currencyMeta.rate;
+
+  // Technical Feasibility
+  const isComplexTech = /ai|healthtech|hardware|cybersecurity/i.test(industry);
+  const techScore = isComplexTech
+    ? Math.min(90, Math.max(35, 45 + (desc.length > 80 ? 25 : 10)))
+    : Math.min(95, Math.max(50, 70 + (desc.length > 50 ? 20 : 5)));
+  const techLevel = techScore >= 75 ? "High" : techScore >= 50 ? "Moderate" : "Low";
+  const techNote = isComplexTech
+    ? `Complex domain requirements; manageable with experienced technical leads.`
+    : `Standard technology stack; minimal risk of technical barriers.`;
+
+  // Financial Feasibility
+  const minRequiredUsd = /enterprise/i.test(p.business_model || "") ? 150000 : isComplexTech ? 100000 : 40000;
+  const finRatio = budgetUsd / minRequiredUsd;
+  const finScore = Math.min(98, Math.max(20, Math.round(finRatio * 65)));
+  const finLevel = finScore >= 75 ? "High" : finScore >= 50 ? "Moderate" : "Low";
+  const finNote =
+    finRatio >= 1.0
+      ? `Budget allocation covers projected launch and initial runway comfortably.`
+      : `Capital is tight; lean execution and early revenue traction will be critical.`;
+
+  // Market Feasibility
+  const marketScore = Math.min(95, Math.max(30, Math.round(growth * 2.2 + (p.target_market.length > 15 ? 15 : 0))));
+  const marketLevel = marketScore >= 75 ? "High" : marketScore >= 50 ? "Moderate" : "Low";
+  const marketNote = `${growth}% sector growth provides a favorable adoption backdrop.`;
+
+  // Operational Feasibility
+  const opScore = Math.min(92, Math.max(35, Math.round(85 - (risks.find((r) => r.category === "Execution")?.score || 50) * 0.6)));
+  const opLevel = opScore >= 75 ? "High" : opScore >= 50 ? "Moderate" : "Low";
+  const opNote = `Operational complexity is manageable given standard ${p.business_model || "business"} workflows.`;
+
+  // Overall Score (Weighted)
+  const overallScore = Math.round(techScore * 0.25 + finScore * 0.35 + marketScore * 0.25 + opScore * 0.15);
+
+  let grade: FeasibilityAssessment["grade"] = "B";
+  let status: FeasibilityAssessment["status"] = "Feasible with Conditions";
+
+  if (overallScore >= 85) {
+    grade = "A+";
+    status = "Highly Feasible";
+  } else if (overallScore >= 75) {
+    grade = "A";
+    status = "Highly Feasible";
+  } else if (overallScore >= 60) {
+    grade = "B";
+    status = "Feasible with Conditions";
+  } else if (overallScore >= 45) {
+    grade = "C";
+    status = "Feasible with Conditions";
+  } else {
+    grade = "D";
+    status = "High Risk / Challenging";
+  }
+
+  const keyTakeaways: string[] = [];
+  if (finScore >= 70) keyTakeaways.push("Strong financial backing secures initial product runway.");
+  else keyTakeaways.push("Focus on low-cost MVP release to validate unit economics quickly.");
+
+  if (marketScore >= 70) keyTakeaways.push("High sector growth supports rapid customer acquisition.");
+  else keyTakeaways.push("Refine target customer persona to build a defensible niche.");
+
+  if (techScore >= 70) keyTakeaways.push("Favorable technical feasibility enables fast time-to-market.");
+
+  return {
+    overallScore,
+    grade,
+    status,
+    technical: { score: techScore, level: techLevel, statusNote: techNote },
+    financial: { score: finScore, level: finLevel, statusNote: finNote },
+    market: { score: marketScore, level: marketLevel, statusNote: marketNote },
+    operational: { score: opScore, level: opLevel, statusNote: opNote },
+    keyTakeaways,
+  };
 }
 
 export function generateStartupSuggestions(p: Project, analysis: AnalysisResult): SuggestionItem[] {

@@ -21,9 +21,39 @@ const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || "";
 const supabaseBase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function analyzeProjectWithGemini(p) {
+  // Execute local ML prediction in parallel immediately
+  const defaultMlFeatures = {
+    funding_total_usd: Math.max(1000, Number(p.budget) || 50000),
+    funding_rounds: 2,
+    funding_duration: 180,
+    time_to_first_funding: 90,
+    category_count: 2,
+    country_code: "USA",
+    main_category: p.industry || "Software",
+  };
+
+  const mlPromise = (async () => {
+    try {
+      const pythonPath = process.env.PYTHON_PATH || path.resolve(process.cwd(), "Dataset/venv/Scripts/python.exe");
+      const scriptPath = path.resolve(process.cwd(), "server/ml/predict.py");
+      const { stdout } = await execFileAsync(pythonPath, [scriptPath, JSON.stringify(defaultMlFeatures)], { timeout: 3500 });
+      const mlResult = JSON.parse(stdout);
+      if (!mlResult.error) return mlResult;
+    } catch (mlErr) {
+      console.warn("Parallel ML prediction warning:", mlErr.message);
+    }
+    return null;
+  })();
+
   if (!GEMINI_API_KEY) {
     console.log("⚠️ GEMINI_API_KEY not set. Using rule-based calculation.");
-    return generateFallbackAnalysis(p);
+    const fallback = generateFallbackAnalysis(p);
+    const mlResult = await mlPromise;
+    if (mlResult) {
+      fallback.mlPrediction = mlResult;
+      fallback.overallRisk = Math.round((fallback.overallRisk + mlResult.failureProbability) / 2);
+    }
+    return fallback;
   }
 
   try {
@@ -70,6 +100,22 @@ Respond strictly in JSON matching this JSON schema (do not include markdown bloc
   "marketSegments": [
     { "name": "<Segment>", "value": <0-100 number> }
   ],
+  "swot": {
+    "strengths": [{ "text": "<Strength description>", "impact": "high|medium|low", "category": "<Category>" }],
+    "weaknesses": [{ "text": "<Weakness description>", "impact": "high|medium|low", "category": "<Category>" }],
+    "opportunities": [{ "text": "<Opportunity description>", "impact": "high|medium|low", "category": "<Category>" }],
+    "threats": [{ "text": "<Threat description>", "impact": "high|medium|low", "category": "<Category>" }]
+  },
+  "feasibility": {
+    "overallScore": <overall feasibility percentage score 0-100>,
+    "grade": "<Letter grade: A+ | A | B | C | D>",
+    "status": "<Status text: Highly Feasible | Feasible with Conditions | High Risk / Challenging>",
+    "technical": { "score": <0-100>, "level": "High|Moderate|Low", "statusNote": "<Technical feasibility note>" },
+    "financial": { "score": <0-100>, "level": "High|Moderate|Low", "statusNote": "<Financial runway feasibility note>" },
+    "market": { "score": <0-100>, "level": "High|Moderate|Low", "statusNote": "<Market feasibility note>" },
+    "operational": { "score": <0-100>, "level": "High|Moderate|Low", "statusNote": "<Operational feasibility note>" },
+    "keyTakeaways": ["<Strategic takeaway 1>", "<Strategic takeaway 2>", "<Strategic takeaway 3>"]
+  },
   "mlFeatures": {
     "funding_total_usd": <Convert budget to USD numeric value e.g. 500000>,
     "funding_rounds": <Estimate 1 to 5 rounds based on context>,
@@ -82,26 +128,29 @@ Respond strictly in JSON matching this JSON schema (do not include markdown bloc
 }`;
 
     const modelsToTry = [
-      "gemini-flash-latest",
-      "gemini-3.5-flash",
-      "gemini-flash-lite-latest",
       "gemini-2.5-flash",
       "gemini-2.0-flash",
+      "gemini-1.5-flash",
     ];
 
     for (const model of modelsToTry) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
         const resp = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
             body: JSON.stringify({
               contents: [{ parts: [{ text: promptText }] }],
               generationConfig: { responseMimeType: "application/json" },
             }),
           }
         );
+        clearTimeout(timeoutId);
 
         if (!resp.ok) {
           const errText = await resp.text();
@@ -117,26 +166,11 @@ Respond strictly in JSON matching this JSON schema (do not include markdown bloc
           if (parsed && parsed.competitors && parsed.risks && parsed.projections) {
             console.log(`✨ Successfully retrieved online market & competitor review from Gemini AI (${model})!`);
             
-            // ML Model Integration
-            if (parsed.mlFeatures) {
-              console.log("🧠 Sending Gemini features to local ML pipeline...");
-              try {
-                const pythonPath = process.env.PYTHON_PATH || path.resolve(process.cwd(), "Dataset/venv/Scripts/python.exe");
-                const scriptPath = path.resolve(process.cwd(), "server/ml/predict.py");
-                
-                const { stdout } = await execFileAsync(pythonPath, [scriptPath, JSON.stringify(parsed.mlFeatures)]);
-                
-                const mlResult = JSON.parse(stdout);
-                if (!mlResult.error) {
-                  console.log("✅ ML Prediction Result:", mlResult);
-                  parsed.mlPrediction = mlResult;
-                  parsed.overallRisk = Math.round((parsed.overallRisk + mlResult.failureProbability) / 2);
-                } else {
-                  console.error("❌ ML Prediction Error inside python script:", mlResult.error);
-                }
-              } catch (mlErr) {
-                console.error("❌ Failed to execute ML script:", mlErr.message);
-              }
+            const mlResult = await mlPromise;
+            if (mlResult) {
+              console.log("✅ Parallel ML Prediction Result attached:", mlResult);
+              parsed.mlPrediction = mlResult;
+              parsed.overallRisk = Math.round((parsed.overallRisk + mlResult.failureProbability) / 2);
             }
             
             return parsed;
@@ -150,7 +184,13 @@ Respond strictly in JSON matching this JSON schema (do not include markdown bloc
     console.error("Gemini analysis overall failed:", err);
   }
 
-  return generateFallbackAnalysis(p);
+  const fallback = generateFallbackAnalysis(p);
+  const mlResult = await mlPromise;
+  if (mlResult) {
+    fallback.mlPrediction = mlResult;
+    fallback.overallRisk = Math.round((fallback.overallRisk + mlResult.failureProbability) / 2);
+  }
+  return fallback;
 }
 
 function generateFallbackAnalysis(p) {
