@@ -468,8 +468,6 @@ If you find this project helpful for startup validation or machine learning expl
 
 <div align="center">
 
-**Built with ❤️ by Aryan Saini, Ansh Patel, Isha Zope & Jeevitha**
-
 *Empowering Founders with Venture-Grade Machine Intelligence* 🚀📊
 
 **Happy Building! 💡✨**
