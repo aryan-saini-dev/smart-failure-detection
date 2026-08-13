@@ -55,7 +55,7 @@
 
 ---
 
-## 🌟 Project Introduction
+## 🌟 Introduction of the Project
 
 **Smart Failure Detection** is an intelligent, full-stack decision-support workspace designed to help entrepreneurs, venture capitalists, and product teams quantitatively and qualitatively evaluate the viability of early-stage startups.
 
