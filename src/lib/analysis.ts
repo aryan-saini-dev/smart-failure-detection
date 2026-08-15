@@ -816,20 +816,36 @@ export function generateStartupSuggestions(p: Project, analysis: AnalysisResult)
     });
   }
 
-  // 4. Competitor Differentiation
+  // 4. Competitor Differentiation & Product Moat
   suggestions.push({
-    type: "competitor",
-    category: "Product Wedge",
-    title: "Clarify Technical Moat & Positioning",
-    advice: "Detail your proprietary wedge (e.g. 10x speed, workflow automation, or cost advantage) to differentiate from incumbents.",
-    priority: "medium",
+    type: "product",
+    category: "Product Moat",
+    title: "Build a 10x Product Moat & Differentiation Wedge",
+    advice: `Detail your proprietary wedge in ${p.industry || "this market"} (e.g. 10x workflow speed, AI automation, or structural cost advantage) to build defensibility against incumbents.`,
+    priority: "high",
     timeframe: "30 Days",
-    impactScore: 87,
+    impactScore: 92,
+    riskReduction: "30% Risk Reduction",
+    steps: [
+      "Publish competitive comparison matrix highlighting unique tech & speed advantages.",
+      "Focus product roadmap on core 10x workflow accelerator features.",
+      "Gather early user telemetry on feature usage to deepen workflow lock-in."
+    ]
+  });
+
+  suggestions.push({
+    type: "product",
+    category: "Product Moat",
+    title: "Proprietary Data & Integration Flywheel",
+    advice: "Create proprietary data loops and multi-tool integrations that increase switching costs for target customers.",
+    priority: "medium",
+    timeframe: "60 Days",
+    impactScore: 88,
     riskReduction: "20% Risk Reduction",
     steps: [
-      "Publish competitive comparison matrix highlighting unique advantages.",
-      "Focus product roadmap on core 10x workflow accelerator.",
-      "Gather user feedback on feature differentiation vs existing market solutions."
+      "Build native connectors into 3 most-used tools in customer workflow.",
+      "Store aggregated workspace metadata to provide personalized insights.",
+      "Incentivize team-wide adoption with shared workspace features."
     ]
   });
 

@@ -172,3 +172,18 @@
 .animate-float {
   animation: float-particle 3.2s ease-in-out infinite;
 }
+
+@keyframes card-intro {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-card-intro {
+  animation: card-intro 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

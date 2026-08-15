@@ -44,7 +44,7 @@ export function EnhancedSuggestionsView({ analysis }: EnhancedSuggestionsViewPro
       const cat = (item.category || item.type || "").toLowerCase();
       if (activeSubTab === "capital") return cat.includes("capital") || cat.includes("runway");
       if (activeSubTab === "gtm") return cat.includes("gtm") || cat.includes("market") || cat.includes("strategy");
-      if (activeSubTab === "product") return cat.includes("product") || cat.includes("competitor") || cat.includes("moat");
+      if (activeSubTab === "product") return cat.includes("product") || cat.includes("competitor") || cat.includes("moat") || cat.includes("wedge");
       if (activeSubTab === "risk_defense") return cat.includes("risk");
       return true;
     });
@@ -73,7 +73,7 @@ export function EnhancedSuggestionsView({ analysis }: EnhancedSuggestionsViewPro
 
       {/* Expandable Mini Graph Nodes View */}
       {showGraphDetails && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 glass-card p-3 border border-white/10 text-xs">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 glass-card p-3 border border-white/10 text-xs animate-card-intro">
           {[
             { name: "Market Research Agent", icon: Compass, status: "Verified" },
             { name: "Quantitative Risk Agent", icon: Cpu, status: "Verified" },
@@ -94,7 +94,7 @@ export function EnhancedSuggestionsView({ analysis }: EnhancedSuggestionsViewPro
         </div>
       )}
 
-      {/* 2. SubTabs Bar (Left-most & default is "All Guidance") */}
+      {/* 2. SubTabs Bar */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none border-b border-white/10">
         {subTabs.map((tab) => (
           <button
@@ -114,7 +114,7 @@ export function EnhancedSuggestionsView({ analysis }: EnhancedSuggestionsViewPro
         ))}
       </div>
 
-      {/* 3. Suggestions Cards with Improved Typography & Hierarchy */}
+      {/* 3. Suggestions Cards with Staggered Intro Micro-Animations */}
       {activeSubTab !== "mitigations" && (
         <div className="grid gap-3.5 grid-cols-1 md:grid-cols-2">
           {currentSuggestions.map((item, idx) => {
@@ -128,8 +128,9 @@ export function EnhancedSuggestionsView({ analysis }: EnhancedSuggestionsViewPro
 
             return (
               <div
-                key={idx}
-                className="glass-card p-4 border border-white/10 hover:border-white/20 transition-all rounded-xl flex flex-col justify-between"
+                key={`${activeSubTab}-${idx}`}
+                style={{ animationDelay: `${idx * 70}ms` }}
+                className="glass-card p-4 border border-white/10 hover:border-white/20 transition-all rounded-xl flex flex-col justify-between animate-card-intro opacity-0"
               >
                 <div>
                   {/* Category Subtitle & Priority Badge */}
@@ -165,7 +166,7 @@ export function EnhancedSuggestionsView({ analysis }: EnhancedSuggestionsViewPro
                       </button>
 
                       {isExpanded && (
-                        <ol className="mt-2.5 space-y-2 pt-2.5 border-t border-white/10 text-xs text-white/90">
+                        <ol className="mt-2.5 space-y-2 pt-2.5 border-t border-white/10 text-xs text-white/90 animate-card-intro">
                           {item.steps.map((step, sIdx) => (
                             <li key={sIdx} className="flex items-start gap-2">
                               <span className="font-mono text-[10px] text-[color:var(--accent)] font-bold shrink-0 mt-0.5">
@@ -200,11 +201,15 @@ export function EnhancedSuggestionsView({ analysis }: EnhancedSuggestionsViewPro
         </div>
       )}
 
-      {/* 4. Risk Mitigations Subtab */}
+      {/* 4. Risk Mitigations Subtab with Intro Animation */}
       {activeSubTab === "mitigations" && (
         <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
-          {analysis.risks.map((r) => (
-            <div key={r.category} className="glass-card p-3.5 border border-white/10 rounded-xl space-y-2">
+          {analysis.risks.map((r, rIdx) => (
+            <div
+              key={`${activeSubTab}-${r.category}`}
+              style={{ animationDelay: `${rIdx * 70}ms` }}
+              className="glass-card p-3.5 border border-white/10 rounded-xl space-y-2 animate-card-intro opacity-0"
+            >
               <div className="flex items-center justify-between">
                 <span className="font-display text-sm font-semibold text-white flex items-center gap-1.5">
                   <AlertTriangle className={`h-4 w-4 ${r.score > 65 ? "text-red-400" : "text-amber-400"}`} />
@@ -227,7 +232,7 @@ export function EnhancedSuggestionsView({ analysis }: EnhancedSuggestionsViewPro
       )}
 
       {activeSubTab !== "mitigations" && currentSuggestions.length === 0 && (
-        <div className="glass-card p-6 text-center text-xs text-[color:var(--muted-foreground)]">
+        <div className="glass-card p-6 text-center text-xs text-[color:var(--muted-foreground)] animate-card-intro">
           No suggestions listed under this category.
         </div>
       )}
