@@ -46,6 +46,10 @@ export type RiskFactor = {
   impact?: number; // 1 - 5
   severity?: RiskSeverity;
   mitigation?: string;
+  timeframe?: string;
+  expectedImpact?: string;
+  riskReductionScore?: number;
+  steps?: string[];
 };
 
 export type ProjectionPoint = {
@@ -60,10 +64,15 @@ export type MarketSegment = {
 };
 
 export type SuggestionItem = {
-  type: "capital" | "strategy" | "risk" | "competitor";
+  type?: "capital" | "strategy" | "risk" | "competitor" | "product" | "operations" | string;
+  category?: string;
   title: string;
   advice: string;
-  priority: "high" | "medium" | "low";
+  priority: "high" | "medium" | "low" | "critical";
+  timeframe?: string;
+  steps?: string[];
+  impactScore?: number;
+  riskReduction?: string;
 };
 
 export type SwotItem = {
@@ -96,6 +105,21 @@ export type FeasibilityAssessment = {
   keyTakeaways: string[];
 };
 
+export type LangGraphWorkflowStep = {
+  id: string;
+  name: string;
+  status: string;
+  timestamp: string;
+  details: string;
+};
+
+export type LangGraphMetadata = {
+  executed: boolean;
+  steps: LangGraphWorkflowStep[];
+  nodeCount: number;
+  refined: boolean;
+};
+
 export type AnalysisResult = {
   projections: ProjectionPoint[];
   risks: RiskFactor[];
@@ -111,6 +135,7 @@ export type AnalysisResult = {
     failureProbability: number;
     successProbability: number;
   };
+  langgraphWorkflow?: LangGraphMetadata;
 };
 
 const INDUSTRY_GROWTH_RATES: Record<string, number> = {
@@ -658,23 +683,50 @@ export function generateStartupSuggestions(p: Project, analysis: AnalysisResult)
   if (budgetUsd < minRequiredUsd * 0.7) {
     suggestions.push({
       type: "capital",
-      title: "Increase Capital Runway",
+      category: "Capital Runway",
+      title: "Increase Capital Runway & Cap Monthly Burn",
       advice: `Allocated budget of ${formattedBudget} is tight for ${p.industry || "this sector"}. We recommend extending capital to ~${formattedMin} or launching with a streamlined MVP.`,
       priority: "high",
+      timeframe: "Immediate (0-30 Days)",
+      impactScore: 92,
+      riskReduction: "35% Risk Reduction",
+      steps: [
+        "Audit monthly recurring expenses and defer non-critical software/hardware commitments.",
+        "Prioritize lean MVP scope focused exclusively on core value delivery.",
+        "Set milestone-based budget releases tied to customer acquisition targets."
+      ]
     });
   } else if (budgetUsd > minRequiredUsd * 2.5) {
     suggestions.push({
       type: "capital",
-      title: "Optimize Capital Allocation",
+      category: "Capital Runway",
+      title: "Optimize Capital Allocation Strategy",
       advice: `Strong runway backing (${formattedBudget}). Focus 45% of capital on early customer acquisition & key hires rather than bloated initial features.`,
       priority: "low",
+      timeframe: "Q1-Q2 (0-90 Days)",
+      impactScore: 82,
+      riskReduction: "15% Risk Reduction",
+      steps: [
+        "Allocate 45% of budget to customer acquisition & strategic marketing channels.",
+        "Reserve 30% for core engineering and key technical leadership hires.",
+        "Maintain 25% cash buffer for market pivots and unexpected opportunities."
+      ]
     });
   } else {
     suggestions.push({
       type: "capital",
-      title: "Balanced Runway Management",
+      category: "Capital Runway",
+      title: "Balanced Cash & Burn Rate Governance",
       advice: `Your ${formattedBudget} budget provides 8-12 months of runway. Cap monthly burn rate until reaching initial product-market traction.`,
       priority: "medium",
+      timeframe: "Monthly (Ongoing)",
+      impactScore: 86,
+      riskReduction: "20% Risk Reduction",
+      steps: [
+        "Implement bi-weekly financial reviews tracking actual vs projected cash burn.",
+        "Establish key performance indicators (KPIs) required before expanding team headcount.",
+        "Secure pre-negotiated credit or strategic cloud credits."
+      ]
     });
   }
 
@@ -682,23 +734,50 @@ export function generateStartupSuggestions(p: Project, analysis: AnalysisResult)
   if (/enterprise/i.test(model)) {
     suggestions.push({
       type: "strategy",
-      title: "Focus on Pilot Conversions",
+      category: "Go-To-Market",
+      title: "Focus on High-Intent Pilot Conversions",
       advice: "Enterprise sales cycles take 4-9 months. Offer 30-day proof-of-concept pilots to land initial reference customers quickly.",
       priority: "high",
+      timeframe: "30-60 Days",
+      impactScore: 94,
+      riskReduction: "30% Risk Reduction",
+      steps: [
+        "Design a 30-day structured Proof of Concept (PoC) pilot framework.",
+        "Target mid-market decision makers with pain-point specific case studies.",
+        "Secure early customer testimonials to build industry credibility."
+      ]
     });
   } else if (/freemium|b2c/i.test(model)) {
     suggestions.push({
       type: "strategy",
-      title: "User Retention & Virality",
+      category: "Go-To-Market",
+      title: "Drive User Retention & Product Virality",
       advice: "Prioritize Day-1 and Day-7 user retention and product virality mechanisms before spending heavily on paid channels.",
       priority: "high",
+      timeframe: "First 30 Days",
+      impactScore: 89,
+      riskReduction: "25% Risk Reduction",
+      steps: [
+        "Optimize onboarding flow to achieve under 60-second time-to-value.",
+        "Implement in-app viral sharing loops and incentive mechanics.",
+        "Monitor user drop-off points with analytics telemetry."
+      ]
     });
   } else {
     suggestions.push({
       type: "strategy",
-      title: "Product-Led Onboarding",
+      category: "Go-To-Market",
+      title: "Implement Product-Led Onboarding",
       advice: "Build an effortless, self-serve onboarding flow to deliver immediate time-to-value for new signups.",
       priority: "medium",
+      timeframe: "30 Days",
+      impactScore: 85,
+      riskReduction: "20% Risk Reduction",
+      steps: [
+        "Remove pre-signup friction and lengthy registration forms.",
+        "Provide interactive sample data for immediate product exploration.",
+        "Set up automated email sequences triggering feature adoption."
+      ]
     });
   }
 
@@ -706,28 +785,53 @@ export function generateStartupSuggestions(p: Project, analysis: AnalysisResult)
   if (analysis.overallRisk > 60) {
     suggestions.push({
       type: "risk",
-      title: "Sharpen Market Wedge",
+      category: "Risk Defense",
+      title: "Sharpen Sub-Niche Market Wedge",
       advice: `Overall risk score is elevated (${analysis.overallRisk}/100). Focus on a specific, underserved sub-niche in ${p.target_market || "your market"} to establish defensibility.`,
       priority: "high",
+      timeframe: "Immediate (0-15 Days)",
+      impactScore: 95,
+      riskReduction: "40% Risk Reduction",
+      steps: [
+        "Identify top 3 underserved sub-segments within target market.",
+        "Tailor landing page messaging and feature prioritization to primary niche.",
+        "Conduct 15 customer discovery interviews to validate willingness-to-pay."
+      ]
     });
   } else {
     suggestions.push({
       type: "risk",
-      title: "Accelerate GTM Distribution",
+      category: "Risk Defense",
+      title: "Accelerate GTM Distribution Velocity",
       advice: "Low risk profile detected. Double down on co-marketing and strategic partnerships to capture market share fast.",
       priority: "low",
+      timeframe: "Q1 (0-60 Days)",
+      impactScore: 84,
+      riskReduction: "15% Risk Reduction",
+      steps: [
+        "Identify 5 non-competing partner products in the same ecosystem.",
+        "Launch joint webinars and integration announcements.",
+        "Scale high-performing acquisition channels."
+      ]
     });
   }
 
   // 4. Competitor Differentiation
-  if ((p.description || "").length < 60) {
-    suggestions.push({
-      type: "competitor",
-      title: "Clarify Technology Moat",
-      advice: "Detail your proprietary wedge (e.g. 10x speed, workflow automation, or cost advantage) to differentiate from incumbents.",
-      priority: "medium",
-    });
-  }
+  suggestions.push({
+    type: "competitor",
+    category: "Product Wedge",
+    title: "Clarify Technical Moat & Positioning",
+    advice: "Detail your proprietary wedge (e.g. 10x speed, workflow automation, or cost advantage) to differentiate from incumbents.",
+    priority: "medium",
+    timeframe: "30 Days",
+    impactScore: 87,
+    riskReduction: "20% Risk Reduction",
+    steps: [
+      "Publish competitive comparison matrix highlighting unique advantages.",
+      "Focus product roadmap on core 10x workflow accelerator.",
+      "Gather user feedback on feature differentiation vs existing market solutions."
+    ]
+  });
 
   return suggestions;
 }
