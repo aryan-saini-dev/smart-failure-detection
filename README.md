@@ -470,6 +470,4 @@ If you find this project helpful for startup validation or machine learning expl
 
 *Empowering Founders with Venture-Grade Machine Intelligence* 🚀📊
 
-**Happy Building! 💡✨**
-
 </div>
