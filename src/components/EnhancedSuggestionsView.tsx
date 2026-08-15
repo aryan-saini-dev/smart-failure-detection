@@ -30,7 +30,6 @@ export function EnhancedSuggestionsView({ analysis }: EnhancedSuggestionsViewPro
     { id: "all", label: "All Guidance" },
     { id: "capital", label: "Capital Runway" },
     { id: "gtm", label: "Go-To-Market" },
-    { id: "product", label: "Product Moat" },
     { id: "risk_defense", label: "Risk Defense" },
     { id: "mitigations", label: "Risk Mitigations" },
   ];
@@ -43,8 +42,7 @@ export function EnhancedSuggestionsView({ analysis }: EnhancedSuggestionsViewPro
     return rawSuggestions.filter((item) => {
       const cat = (item.category || item.type || "").toLowerCase();
       if (activeSubTab === "capital") return cat.includes("capital") || cat.includes("runway");
-      if (activeSubTab === "gtm") return cat.includes("gtm") || cat.includes("market") || cat.includes("strategy");
-      if (activeSubTab === "product") return cat.includes("product") || cat.includes("competitor") || cat.includes("moat") || cat.includes("wedge");
+      if (activeSubTab === "gtm") return cat.includes("gtm") || cat.includes("market") || cat.includes("strategy") || cat.includes("product");
       if (activeSubTab === "risk_defense") return cat.includes("risk");
       return true;
     });
