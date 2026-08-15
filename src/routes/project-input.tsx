@@ -59,6 +59,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Aurora from "@/components/Aurora";
+import { EnhancedSuggestionsView } from "@/components/EnhancedSuggestionsView";
 
 export const Route = createFileRoute("/project-input")({
   validateSearch: (search: Record<string, unknown>): Partial<{
@@ -840,50 +841,7 @@ function ProjectInputPage() {
               )}
 
               {tab === "suggestions" && (
-                <div className="glass-card p-3.5 sm:p-6 flex-1 flex flex-col justify-between w-full min-w-0 overflow-hidden">
-                  <div>
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-3">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Lightbulb className="h-4 w-4 sm:h-5 sm:w-5 text-[color:var(--accent)] shrink-0" />
-                        <h3 className="font-display text-base sm:text-lg font-semibold truncate">Strategic Recommendations</h3>
-                      </div>
-                      <span className="text-[10px] sm:text-xs font-semibold text-[color:var(--accent)] bg-[color:var(--accent)]/10 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-[color:var(--accent)]/30 shrink-0">
-                        Actionable Insights
-                      </span>
-                    </div>
-                    <p className="mt-2 text-xs text-[color:var(--muted-foreground)]">
-                      Concise, rule-based startup guidance calculated from your budget, business model, and risk profile.
-                    </p>
-
-                    <div className="mt-4 sm:mt-5 grid gap-3 sm:gap-3.5 grid-cols-1 md:grid-cols-2 w-full min-w-0">
-                      {(activeAnalysis.suggestions || generateStartupSuggestions(form, activeAnalysis)).map((item: any, idx: number) => (
-                        <div
-                          key={idx}
-                          className="group relative rounded-xl border border-white/10 bg-white/[0.02] p-3.5 sm:p-4 backdrop-blur transition-all duration-200 hover:border-white/20 hover:bg-white/[0.04] w-full min-w-0"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-display text-xs sm:text-sm font-semibold text-[color:var(--foreground)] truncate">
-                              {item.title}
-                            </span>
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[9px] sm:text-[11px] font-semibold capitalize shrink-0 ${item.priority === "high"
-                                ? "border border-red-500/30 bg-red-500/10 text-red-300"
-                                : item.priority === "medium"
-                                  ? "border border-amber-500/30 bg-amber-500/10 text-amber-300"
-                                  : "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                                }`}
-                            >
-                              {item.priority} priority
-                            </span>
-                          </div>
-                          <p className="mt-2 text-xs leading-relaxed text-[color:var(--muted-foreground)] group-hover:text-[color:var(--foreground)]/90 break-words">
-                            {item.advice}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <EnhancedSuggestionsView analysis={activeAnalysis} project={analyzedForm || form} />
               )}
             </div>
           )}
@@ -1256,25 +1214,23 @@ function FeasibilityView({ feasibility }: { feasibility: NonNullable<import("@/l
 
 function EnhancedRiskEngineView({ risks, overallRisk }: { risks: import("@/lib/analysis").RiskFactor[]; overallRisk: number }) {
   return (
-    <div className="space-y-3 sm:space-y-4 flex-1 w-full min-w-0 overflow-hidden">
-      <div className="glass-card p-3.5 sm:p-5 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 w-full min-w-0">
+    <div className="space-y-3 flex-1 w-full min-w-0 overflow-hidden">
+      <div className="glass-card p-3 sm:p-4 border border-white/10 flex flex-row items-center justify-between gap-3 w-full min-w-0">
         <div>
-          <h3 className="font-display text-base sm:text-lg font-semibold tracking-tight">Risk Assessment Engine</h3>
-          <p className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs text-[color:var(--muted-foreground)]">
-            Quantitative vulnerability matrix measuring structural risk drivers & mitigations.
+          <h3 className="font-display text-sm sm:text-base font-semibold tracking-tight">Risk Engine Assessment</h3>
+          <p className="text-[10px] sm:text-[11px] text-[color:var(--muted-foreground)]">
+            Quantitative vulnerability matrix measuring 6 structural risk drivers.
           </p>
         </div>
-        <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
-          <div className="text-right">
-            <p className="text-[10px] font-mono uppercase text-[color:var(--muted-foreground)]">Composite Risk Index</p>
-            <p className={`font-display text-xl sm:text-2xl font-bold ${overallRisk > 65 ? "text-red-400" : overallRisk > 45 ? "text-amber-400" : "text-emerald-400"}`}>
-              {overallRisk}/100
-            </p>
-          </div>
+        <div className="text-right shrink-0">
+          <p className="text-[9px] font-mono uppercase text-[color:var(--muted-foreground)]">Risk Index</p>
+          <p className={`font-display text-base sm:text-lg font-bold ${overallRisk > 65 ? "text-red-400" : overallRisk > 45 ? "text-amber-400" : "text-emerald-400"}`}>
+            {overallRisk}/100
+          </p>
         </div>
       </div>
 
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 w-full min-w-0">
+      <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 w-full min-w-0">
         {risks.map((r: any) => {
           const sev = r.severity || (r.score >= 75 ? "critical" : r.score >= 55 ? "high" : r.score >= 35 ? "medium" : "low");
           const sevBadge =
@@ -1287,15 +1243,15 @@ function EnhancedRiskEngineView({ risks, overallRisk }: { risks: import("@/lib/a
               : "bg-emerald-500/20 text-emerald-300 border-emerald-500/35";
 
           return (
-            <div key={r.category} className="glass-card p-3.5 sm:p-5 flex flex-col justify-between w-full min-w-0">
+            <div key={r.category} className="glass-card p-3 flex flex-col justify-between w-full min-w-0">
               <div>
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <AlertTriangle className={`h-4 w-4 shrink-0 ${r.score > 65 ? "text-red-400" : r.score > 45 ? "text-amber-400" : "text-emerald-400"}`} />
-                    <p className="font-display text-xs sm:text-base font-semibold truncate">{r.category} Risk</p>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <AlertTriangle className={`h-3.5 w-3.5 shrink-0 ${r.score > 65 ? "text-red-400" : r.score > 45 ? "text-amber-400" : "text-emerald-400"}`} />
+                    <p className="font-display text-xs font-semibold truncate">{r.category} Risk</p>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className={`rounded-md px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold uppercase border ${sevBadge}`}>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase border ${sevBadge}`}>
                       {sev}
                     </span>
                     <span className="font-mono text-xs font-bold text-[color:var(--foreground)]">
@@ -1303,20 +1259,20 @@ function EnhancedRiskEngineView({ risks, overallRisk }: { risks: import("@/lib/a
                     </span>
                   </div>
                 </div>
-                <div className="mt-2.5 sm:mt-3 h-2 overflow-hidden rounded-full bg-white/5 w-full">
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/5 w-full">
                   <div
                     className={`h-full rounded-full ${r.score > 65 ? "bg-red-500" : r.score > 45 ? "bg-[color:var(--accent)]" : "bg-emerald-500"}`}
                     style={{ width: `${r.score}%` }}
                   />
                 </div>
-                <p className="mt-2.5 sm:mt-3 text-xs leading-relaxed text-[color:var(--muted-foreground)] break-words">{r.note}</p>
+                <p className="mt-2 text-[11px] text-[color:var(--muted-foreground)] line-clamp-2">{r.note}</p>
               </div>
 
               {r.mitigation && (
-                <div className="mt-3 pt-3 border-t border-white/5 text-[11px] text-[color:var(--foreground)]/80 flex items-start gap-2 min-w-0">
+                <div className="mt-2 pt-2 border-t border-white/5 text-[10px] text-white/90 flex items-start gap-1.5 min-w-0">
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0 break-words">
-                    <span className="font-semibold text-emerald-400">Mitigation: </span>
+                  <div className="flex-1 min-w-0 leading-tight line-clamp-2">
+                    <strong className="text-emerald-400">Action: </strong>
                     {r.mitigation}
                   </div>
                 </div>

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { computeAnalysis, type Project } from "@/lib/analysis";
 import { getDemoProject, hasDemoSession } from "@/lib/demo-session";
 import { getProject } from "@/lib/local-api";
+import { EnhancedSuggestionsView } from "@/components/EnhancedSuggestionsView";
 
 export const Route = createFileRoute("/projects/$projectId")({ component: SavedAnalysisPage });
 
@@ -12,7 +13,7 @@ function SavedAnalysisPage() {
   const { projectId } = Route.useParams();
   const [project, setProject] = useState<Project | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"overview" | "competitors" | "risk" | "market" | "swot" | "feasibility">("overview");
+  const [tab, setTab] = useState<"overview" | "competitors" | "risk" | "market" | "suggestions" | "swot" | "feasibility">("overview");
   const analysis = useMemo(() => (project ? computeAnalysis(project) : null), [project]);
 
   useEffect(() => {
@@ -43,6 +44,7 @@ function SavedAnalysisPage() {
     feasibility: "Feasibility",
     competitors: "Competitors",
     market: "Market",
+    suggestions: "Suggestions",
   };
 
   return <main className="mx-auto max-w-6xl px-6 py-12 md:px-8 md:py-16">
@@ -62,7 +64,7 @@ function SavedAnalysisPage() {
           onChange={(e) => setTab(e.target.value as typeof tab)}
           className="w-full appearance-none rounded-lg bg-[color:var(--accent)]/15 border border-[color:var(--accent)]/30 px-3.5 py-2.5 pr-10 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
         >
-          {(["overview", "risk", "swot", "feasibility", "competitors", "market"] as const).map((item) => (
+          {(["overview", "risk", "swot", "feasibility", "competitors", "market", "suggestions"] as const).map((item) => (
             <option key={item} value={item} className="bg-[color:var(--background-alt)] text-white">
               {tabLabels[item]}
             </option>
@@ -74,7 +76,7 @@ function SavedAnalysisPage() {
 
     {/* Desktop Tab Bar (Visible on Screens >= 640px) */}
     <div className="hidden sm:flex mt-6 overflow-x-auto rounded-lg border border-white/10 bg-white/[0.03] p-1">
-      {(["overview", "risk", "swot", "feasibility", "competitors", "market"] as const).map((item) => <button key={item} onClick={() => setTab(item)} className={`min-w-max flex-1 rounded-md px-4 py-2 text-sm font-medium capitalize transition-colors ${tab === item ? "bg-[color:var(--accent)]/15 text-[color:var(--foreground)]" : "text-[color:var(--muted-foreground)]"}`}>{tabLabels[item]}</button>)}
+      {(["overview", "risk", "swot", "feasibility", "competitors", "market", "suggestions"] as const).map((item) => <button key={item} onClick={() => setTab(item)} className={`min-w-max flex-1 rounded-md px-4 py-2 text-sm font-medium capitalize transition-colors ${tab === item ? "bg-[color:var(--accent)]/15 text-[color:var(--foreground)]" : "text-[color:var(--muted-foreground)]"}`}>{tabLabels[item]}</button>)}
     </div>
     {tab === "overview" && <Overview project={project} analysis={analysis} />}
     {tab === "competitors" && <Competitors analysis={analysis} />}
@@ -82,6 +84,7 @@ function SavedAnalysisPage() {
     {tab === "swot" && analysis.swot && <SwotView swot={analysis.swot} />}
     {tab === "feasibility" && analysis.feasibility && <FeasibilityView feasibility={analysis.feasibility} />}
     {tab === "market" && <Market project={project} analysis={analysis} />}
+    {tab === "suggestions" && <div className="mt-6"><EnhancedSuggestionsView analysis={analysis} project={project} /></div>}
   </main>;
 }
 
@@ -89,8 +92,8 @@ function Overview({ project, analysis }: { project: Project; analysis: ReturnTyp
 function Competitors({ analysis }: { analysis: ReturnType<typeof computeAnalysis> }) { return <div className="mt-6 grid gap-4 md:grid-cols-2">{analysis.competitors.map((item) => <div key={item.name} className="glass-card p-5"><div className="flex items-center justify-between"><h2 className="font-display text-lg font-semibold">{item.name}</h2><span className="font-mono text-xs text-[color:var(--accent)]">{item.overlap}% overlap</span></div><p className="mt-3 text-sm text-emerald-300/85"><span className="font-mono text-[10px] uppercase tracking-widest">Strength</span><br />{item.strength}</p><p className="mt-3 text-sm text-red-300/85"><span className="font-mono text-[10px] uppercase tracking-widest">Weakness</span><br />{item.weakness}</p></div>)}</div> }
 
 function Risks({ analysis }: { analysis: ReturnType<typeof computeAnalysis> }) { 
-  return <div className="mt-6 space-y-4">
-    <div className="grid gap-4 md:grid-cols-2">
+  return <div className="mt-6 space-y-3">
+    <div className="grid gap-3 md:grid-cols-2">
       {analysis.risks.map((r: any) => {
         const sev = r.severity || (r.score >= 75 ? "critical" : r.score >= 55 ? "high" : r.score >= 35 ? "medium" : "low");
         const sevBadge =
@@ -103,30 +106,30 @@ function Risks({ analysis }: { analysis: ReturnType<typeof computeAnalysis> }) {
             : "bg-emerald-500/20 text-emerald-300 border-emerald-500/35";
 
         return (
-          <div key={r.category} className="glass-card p-5 flex flex-col justify-between">
+          <div key={r.category} className="glass-card p-3.5 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className={`h-4 w-4 ${r.score > 65 ? "text-red-400" : r.score > 45 ? "text-amber-400" : "text-emerald-400"}`} />
-                  <h2 className="font-display text-lg font-semibold">{r.category} Risk</h2>
+                <div className="flex items-center gap-1.5">
+                  <AlertTriangle className={`h-3.5 w-3.5 ${r.score > 65 ? "text-red-400" : r.score > 45 ? "text-amber-400" : "text-emerald-400"}`} />
+                  <h2 className="font-display text-sm font-semibold">{r.category} Risk</h2>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase border ${sevBadge}`}>
+                <div className="flex items-center gap-1.5">
+                  <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase border ${sevBadge}`}>
                     {sev}
                   </span>
-                  <span className="font-mono text-sm font-semibold text-[color:var(--accent)]">{r.score}/100</span>
+                  <span className="font-mono text-xs font-semibold text-[color:var(--accent)]">{r.score}/100</span>
                 </div>
               </div>
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/5">
+              <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/5">
                 <div className={`h-full rounded-full ${r.score > 65 ? "bg-red-500" : r.score > 45 ? "bg-[color:var(--accent)]" : "bg-emerald-500"}`} style={{ width: `${r.score}%` }} />
               </div>
-              <p className="mt-4 text-sm text-[color:var(--muted-foreground)]">{r.note}</p>
+              <p className="mt-2.5 text-[11px] text-[color:var(--muted-foreground)] line-clamp-2">{r.note}</p>
             </div>
             {r.mitigation && (
-              <div className="mt-4 pt-3 border-t border-white/5 text-xs text-[color:var(--foreground)]/80 flex items-start gap-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-semibold text-emerald-400">Mitigation: </span>
+              <div className="mt-2.5 pt-2 border-t border-white/5 text-[10px] text-[color:var(--foreground)]/80 flex items-start gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="leading-tight line-clamp-2">
+                  <span className="font-semibold text-emerald-400">Action: </span>
                   {r.mitigation}
                 </div>
               </div>
