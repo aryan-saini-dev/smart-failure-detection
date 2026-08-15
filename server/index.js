@@ -4,6 +4,7 @@ import { promisify } from "node:util";
 import path from "node:path";
 import process from "node:process";
 import { createClient } from "@supabase/supabase-js";
+import { runLangGraphWorkflow } from "./langgraph/agentGraph.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -21,6 +22,17 @@ const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || "";
 const supabaseBase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function analyzeProjectWithGemini(p) {
+  // Try executing LangGraph Agent Workflow first
+  try {
+    const lgResult = await runLangGraphWorkflow(p);
+    if (lgResult) {
+      console.log("🚀 Executed LangGraph Multi-Agent Workflow successfully!");
+      return lgResult;
+    }
+  } catch (lgErr) {
+    console.warn("LangGraph execution attempt fallback:", lgErr.message);
+  }
+
   // Execute local ML prediction in parallel immediately
   const defaultMlFeatures = {
     funding_total_usd: Math.max(1000, Number(p.budget) || 50000),
