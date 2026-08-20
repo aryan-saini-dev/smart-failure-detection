@@ -462,7 +462,7 @@ This project is licensed under the **MIT License**. See the `LICENSE` file for d
 
 ## ⭐ Star Us!
 
-If you find this project helpful for startup validation or machine learning exploration, please give it a ⭐ on [GitHub](https://github.com/aryan-saini-dev/smart-failure-detection)!
+If you find this project helpful for startup validation or machine learning exploration, please give it a ⭐ !
 
 ---
 
