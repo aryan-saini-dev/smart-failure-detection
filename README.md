@@ -71,10 +71,10 @@ By combining the predictive power of a **custom Machine Learning model** (traine
 
 ## 🛑 Problem Statement
 
-It is a well-established reality in venture finance that **over 90% of early-stage startups fail**. The root causes are often preventable:
-- Misjudging target market size and demand.
-- Premature capital burn and inadequate runway planning.
-- Underestimating entrenched competition and distribution moats.
+In venture capital, it is a well-known fact that **more than 90% of early-stage startups fail**. Often, the underlying problems can be avoided:
+- The size and demand of the target market are misjudged.
+- Inadequate runway planning and an early cash burn.
+- Underestimating distribution moats and fierce rivalry.
 - Operating within an echo chamber without unbiased, quantitative data.
 
 Traditional venture due diligence is slow, opaque, and inaccessible to early-stage founders. Generic chatbots lack mathematical rigor, while static spreadsheets fail to capture real-time market dynamics. **Smart Failure Detection bridges this gap.**
