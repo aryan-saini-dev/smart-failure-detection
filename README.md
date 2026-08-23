@@ -32,7 +32,7 @@
 | :--- | :--- | :--- |
 | 🧑‍💻 **Aryan Saini** | Project Lead & Machine Learning | System Architecture, XGBoost ML Pipeline, Backend API Engine |
 | 👨‍💻 **Ansh Patel** | Frontend & UI/UX Engineer | React 19 Interface, TanStack Routing, Interactive Recharts Dashboard |
-| 👩‍💻 **Isha Zope** | Data & Intelligence | Gemini AI Feature Engineering, Prompt Architecture, Analytics |
+| 👩‍💻 **Isha Zope** | Data & Intelligence | Gemini AI Feature Engineering, Prompt Architecture, Mitigation Suggestions |
 | 👩‍💻 **Jeevitha** | Cloud & Quality Assurance | Supabase PostgreSQL Security, API Routing, System Testing |
 
 ---
@@ -179,16 +179,16 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 │  │  ┌─────────────────────────────────────────────────┐    │  │
 │  │  │     Failure Prediction & Analytics Pipeline     │    │  │
 │  │  └─────────────────────────────────────────────────┘    │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                         │                                       │
-│         ┌───────────────┴───────────────┐                       │
-│         ▼                               ▼                       │
+│  └──────────────────────────────────────────────────────────┘ │
+│                         │                                      │
+│         ┌───────────────┴───────────────┐                      │
+│         ▼                               ▼                      │
 │  ┌─────────────┐                 ┌──────────────┐              │
 │  │  Gemini AI  │                 │  ML Engine   │              │
 │  │ (Market/LLM)│                 │  (XGBoost)   │              │
 │  │ Google Cloud│                 │ Python exec  │              │
 │  └─────────────┘                 └──────────────┘              │
-│                                                                 │
+│                                                                │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │     PROCESSING & INTELLIGENCE MODULES                    │  │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │  │
@@ -198,7 +198,7 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 │  │  │Projections   │  │ML Inference  │  │Suggestions   │  │  │
 │  │  └──────────────┘  └──────────────┘  └──────────────┘  │  │
 │  └──────────────────────────────────────────────────────────┘  │
-│                                                                 │
+│                                                                │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │     DATA STORAGE & SECURITY                              │  │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │  │
@@ -206,7 +206,7 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 │  │  │(Projects)    │  │(JWT Tokens)  │  │(Policies)    │  │  │
 │  │  └──────────────┘  └──────────────┘  └──────────────┘  │  │
 │  └──────────────────────────────────────────────────────────┘  │
-│                                                                 │
+│                                                                │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
