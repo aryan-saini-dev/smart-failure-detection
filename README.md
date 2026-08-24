@@ -57,9 +57,9 @@
 
 ## 🌟 Introduction of the Project
 
-**Smart Failure Detection** is an intelligent, full-stack decision-support workspace designed to help entrepreneurs, venture capitalists, and product teams quantitatively and qualitatively evaluate the viability of early-stage startups.
+An intelligent, full-stack decision-support workspace called **Smart Failure Detection** was created to assist product teams, venture capitalists, and entrepreneurs in assessing the feasibility of early-stage firms both numerically and qualitatively.
 
-By combining the predictive power of a **custom Machine Learning model** (trained on 66,000+ historical startup outcomes from the [Crunchbase Startup Success/Fail Dataset on Kaggle](https://www.kaggle.com/datasets/yanmaksi/big-startup-secsees-fail-dataset-from-crunchbase)) with the real-time reasoning of **Google Gemini 2.5 Flash**, the platform acts as an automated venture due diligence analyst.
+The platform functions as an automated venture due diligence analyst by fusing the real-time reasoning of **Google Gemini 2.5 Flash** with the predictive power of a **custom Machine Learning model** (trained on 66,000+ historical startup outcomes from the [Crunchbase Startup Success/Fail Dataset on Kaggle](https://www.kaggle.com/datasets/yanmaksi/big-startup-secsees-fail-dataset-from crunchbase).
 
 ### 🎯 What We Deliver
 - 🧠 **Statistical Failure & Success Probability**: Exact risk probabilities calculated from historical Crunchbase venture data.
