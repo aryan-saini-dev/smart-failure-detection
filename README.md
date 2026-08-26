@@ -61,11 +61,11 @@ An intelligent, full-stack decision-support workspace called **Smart Failure Det
 
 The platform functions as an automated venture due diligence analyst by fusing the real-time reasoning of **Google Gemini 2.5 Flash** with the predictive power of a **custom Machine Learning model** (trained on 66,000+ historical startup outcomes from the [Crunchbase Startup Success/Fail Dataset on Kaggle](https://www.kaggle.com/datasets/yanmaksi/big-startup-secsees-fail-dataset-from crunchbase).
 
-### 🎯 What We Deliver
-- 🧠 **Statistical Failure & Success Probability**: Exact risk probabilities calculated from historical Crunchbase venture data.
-- 🔍 **Automated Competitor Intelligence**: Real-time identification of direct rivals, strengths, weaknesses, and market overlap.
-- 📈 **Predictive Financial Projections**: Dynamic 6-month revenue and burn rate modeling customized to budget and industry benchmarks.
-- 🛡️ **Cloud-Synced Scenario Modeling**: Instant history saving and versioning powered by Supabase PostgreSQL and Row-Level Security.
+### 🎯 What We Offer
+- 🧠 **Statistical Failure & Success Probability**: Exact probability of risk, from the past of Crunchbase venture data.
+- 🔍 **Automated Competitor Intelligence**: Discover direct rivals, strengths, weaknesses, and market overlap in real-time.
+- 📈 **Predictive Financial Projections**: Tailored 6-month revenue and burn rate projections based on budget and industry benchmarks. 
+- 🛡️  **Cloud-Synced Scenario Modeling**: Instant history saving and versioning with Supabase PostgreSQL and Row Level Security.
 
 ---
 
