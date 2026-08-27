@@ -94,10 +94,10 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 
 ## ✨ Key Features
 
-### 🧠 **Quantitative Machine Learning Verdict**
-- Custom-trained classification model (`startup_model_optimized.joblib`) based on XGBoost & Random Forest ensembles.
-- Evaluates 7 key venture attributes: Total Capital, Funding Rounds, Funding Duration, Velocity to First Funding, Country Code, and Industry Category.
-- Delivers clear **Failure vs. Success Probability** confidence meters.
+### 🧠 **Quantitative Machine Learning Conclusion**
+- An XGBoost and Random Forest ensemble-based custom-trained classification model (`startup_model_optimized.joblib`).
+- Total Capital, Funding Rounds, Funding Duration, Velocity to First Funding, Country Code, and Industry Category are the seven major venture attributes that are evaluated.
+- Clear **Failure vs. Success Probability** confidence meters are provided.
 
 ### 🤖 **Generative AI Market Due Diligence**
 - Powered by Google Gemini 2.5 Flash.
