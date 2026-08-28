@@ -99,10 +99,10 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 - Total Capital, Funding Rounds, Funding Duration, Velocity to First Funding, Country Code, and Industry Category are the seven major venture attributes that are evaluated.
 - Clear **Failure vs. Success Probability** confidence meters are provided.
 
-### 🤖 **Generative AI Market Due Diligence**
-- Powered by Google Gemini 2.5 Flash.
-- Analyzes unstructured text descriptions into structured market positioning matrices.
-- Discovers direct competitors with specific operational strengths and vulnerabilities.
+### 🤖 Market Due Diligence for Generative AI
+- Google Gemini 2.5 Flash is the power source.
+- Constructs organized market positioning matrices by analyzing unstructured text descriptions.
+- Identifies immediate rivals with particular operational advantages and disadvantages.
 
 ### 📊 **Multi-Dimensional Risk Breakdown**
 - Real-time scoring across four pillars: **Market Risk**, **Capital Risk**, **Execution Risk**, and **Competitive Risk**.
