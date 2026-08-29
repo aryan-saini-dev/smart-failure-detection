@@ -273,15 +273,15 @@ The quantitative failure prediction engine is trained on real-world historical s
 - **Target Variable**: `is_success` (Binary: `1` for `acquired`/`ipo`, `0` for `closed`).
 - **Class Balance**: 53% Success vs. 47% Failure (stratified 80/20 train/test split).
 
-### ⚙️ Feature Engineering & Preprocessing
-The model extracts and evaluates 7 critical venture signals:
-1. **`funding_total_usd`**: Total capital raised in USD (median-imputed & standardized via `StandardScaler`).
-2. **`funding_rounds`**: Total investment rounds completed.
-3. **`funding_duration`**: Velocity/time span between initial and final funding rounds (in days).
-4. **`time_to_first_funding`**: Time elapsed between startup founding date and initial funding (in days).
-5. **`category_count`**: Number of operating industry categories (proxy for product focus vs. breadth).
-6. **`country_code`**: Geographic jurisdiction (Target Encoded to preserve regional predictive power without matrix sparsity).
-7. **`main_category`**: Primary market vertical across 500+ distinct sectors (Target Encoded).
+### ⚙️ Preprocessing & Feature Engineering
+Seven crucial venture signals are extracted and assessed by the model:
+1. **`funding_total_usd`**: The total amount of money raised in USD (standardized using `StandardScaler` and median-imputed).
+2. **`funding_rounds`**: The total number of completed investment rounds.
+3. **`funding_duration`**: The speed and duration (in days) between the first and last funding rounds.
+4. **`time_to_first_funding`**: The number of days that have passed between the startup's formation date and its inaugural funding.
+5. **`category_count`**: The number of active industry categories (a stand-in for breadth vs. product emphasis).
+6. **`country_code`**: Geographic jurisdiction (Target Encoded without matrix sparsity to maintain regional predictive power).
+7. **`main_category`**: The primary market vertical in more than 500 different sectors (Target Encoded).
 
 ### 🏆 Model Architecture & Evaluation Metrics
 Trained with an **Optimized XGBoost Classifier (`XGBClassifier`)** pipeline featuring 3-fold stratified `GridSearchCV` hyperparameter tuning (`n_estimators: 200`, `max_depth: 5`, `learning_rate: 0.05`, `eval_metric: logloss`).
