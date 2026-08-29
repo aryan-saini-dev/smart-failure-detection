@@ -110,7 +110,7 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 
 ### 📈 **Dynamic Financial Ramp & Runway**
 - Automated 6-month financial trajectory modeling month-by-month revenue vs. operational costs.
-- Automatically adjusts according to industry-specific CAGR growth rates.
+- Automatically adjusts according to industry-specific CAGR growth rates.          
 
 ### 🗄️ **History, Duplication & Guest Session**
 - **Supabase Cloud Sync**: Save multiple startup scenarios to track how pivoting business models alters risk.
