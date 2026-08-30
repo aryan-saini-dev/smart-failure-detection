@@ -135,9 +135,9 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 | :--- | :--- |
 | ![Node.js](https://img.shields.io/badge/Node.js-22%2B-339933?logo=nodedotjs&logoColor=white) | Custom HTTP API server handling cross-origin requests & proxying |
 | ![Child Process](https://img.shields.io/badge/Node.js-execFile%20Bridge-gray?logo=nodedotjs&logoColor=white) | High-performance asynchronous execution bridge to Python ML engine |
-| ![Supabase JS](https://img.shields.io/badge/Supabase-SDK%202.49+-3ECF8E?logo=supabase&logoColor=white) | Cloud database operations and authentication middleware |
+| ![Supabase JS](https://img.shields.io/badge/Supabase-SDK%202.49+-3ECF8E?logo=supabase&logoColor=white) | Cloud database operations and authentication middleware 
 
-### **Machine Learning & AI Engine**
+### **Machine Learning & AI Engine** 
 | Technology | Role |
 | :--- | :--- |
 | ![Google Gemini](https://img.shields.io/badge/Gemini%202.5-Flash%20API-8E75B2?logo=google&logoColor=white) | Live market research, competitor extraction & feature synthesis |
