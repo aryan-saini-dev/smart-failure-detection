@@ -460,12 +460,6 @@ This project is licensed under the **MIT License**. See the `LICENSE` file for d
 
 ---
 
-## ⭐ Star Us!
-
-If you find this project helpful for startup validation or machine learning exploration, please give it a ⭐ !
-
----
-
 <div align="center">
 
 </div>
