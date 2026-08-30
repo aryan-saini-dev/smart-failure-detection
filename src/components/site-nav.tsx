@@ -18,6 +18,7 @@ import { clearSessionToken, getCurrentUser } from "@/lib/local-api";
 const links = [
   { to: "/", label: "Overview" },
   { to: "/project-input", label: "Project Input" },
+  { to: "/dashboard", label: "Dashboard" },
 ] as const;
 
 export function SiteNav() {
