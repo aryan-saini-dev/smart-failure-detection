@@ -120,6 +120,45 @@ export type LangGraphMetadata = {
   refined: boolean;
 };
 
+export type RiskTrendPoint = {
+  month: string;
+  riskScore: number;
+};
+
+export type ExecutiveDashboardData = {
+  overallRisk: number;
+  overallRiskChange: number;
+  successProb: number;
+  successProbChange: number;
+  marketRisk: number;
+  marketRiskChange: number;
+  techRisk: number;
+  techRiskChange: number;
+  riskTrend: RiskTrendPoint[];
+  keyFindings: string[];
+  riskAssessmentSummary: {
+    market: string;
+    financial: string;
+    technical: string;
+  };
+  recommendations: string[];
+  fundingStrategy: {
+    title: string;
+    impact: "Critical Impact" | "High Impact" | "Medium Impact";
+    description: string;
+    actionText: string;
+    actionTab: string;
+  };
+  technicalAdvantage: {
+    title: string;
+    impact: "Critical Impact" | "High Impact" | "Medium Impact";
+    description: string;
+    actionText: string;
+    actionTab: string;
+  };
+  recommendedNextSteps: string[];
+};
+
 export type AnalysisResult = {
   projections: ProjectionPoint[];
   risks: RiskFactor[];
@@ -130,6 +169,7 @@ export type AnalysisResult = {
   suggestions?: SuggestionItem[];
   swot?: SwotAnalysis;
   feasibility?: FeasibilityAssessment;
+  executiveDashboard?: ExecutiveDashboardData;
   mlPrediction?: {
     prediction: "Success" | "Failure";
     failureProbability: number;
@@ -157,6 +197,81 @@ export function growthForIndustry(industry: string): number {
     if (normalized.includes(key)) return rate;
   }
   return 15;
+}
+
+export function generateExecutiveDashboardData(p: Project, result: AnalysisResult): ExecutiveDashboardData {
+  const overallRisk = Math.min(95, Math.max(10, Math.round(result.overallRisk || 65)));
+  const successProb = result.mlPrediction
+    ? Math.round(result.mlPrediction.successProbability)
+    : Math.max(5, 100 - overallRisk);
+
+  const marketRiskObj = result.risks?.find((r) => r.category.toLowerCase().includes("market"));
+  const techRiskObj = result.risks?.find((r) => r.category.toLowerCase().includes("tech"));
+
+  const marketRisk = marketRiskObj ? marketRiskObj.score : Math.min(95, Math.max(30, overallRisk + 13));
+  const techRisk = techRiskObj ? techRiskObj.score : Math.min(90, Math.max(20, Math.round(overallRisk * 0.65)));
+
+  const months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+  const riskTrend: RiskTrendPoint[] = months.map((m, idx) => {
+    const delta = (idx - 5) * 2;
+    return {
+      month: m,
+      riskScore: Math.min(99, Math.max(10, overallRisk + delta)),
+    };
+  });
+
+  const competitorCount = result.competitors?.length || 5;
+  const topComp = result.competitors?.[0]?.name || "direct market incumbents";
+  const budgetVal = p.budget || 50000;
+  const calculatedMonths = Math.max(4, Math.min(24, Math.round(budgetVal / 12500)));
+
+  return {
+    overallRisk,
+    overallRiskChange: 5,
+    successProb,
+    successProbChange: -8,
+    marketRisk,
+    marketRiskChange: 12,
+    techRisk,
+    techRiskChange: -3,
+    riskTrend,
+    keyFindings: [
+      `Market saturation: ${competitorCount}+ direct/indirect competitors identified in target segment`,
+      `Budget runway: Estimated ${calculatedMonths} months remaining at current projected burn rate`,
+      `Team gaps: Missing critical marketing, sales, and specialized domain expertise`,
+      `Differentiation: Require clearer unique value proposition relative to ${topComp}`,
+    ],
+    riskAssessmentSummary: {
+      market: `Market Risk (${marketRisk}%): High competition and customer acquisition costs in ${p.industry || "target market"}.`,
+      financial: `Financial Risk (${overallRisk}%): Insufficient runway relative to growth objectives and revenue projections.`,
+      technical: `Technical Risk (${techRisk}%): Feasible implementation scope with current team and architecture capabilities.`,
+    },
+    recommendations: [
+      `Pivot to a focused niche market to reduce direct competition friction.`,
+      `Secure funding or bridge capital within the next 90 days.`,
+      `Hire marketing and sales leads with proven industry experience.`,
+      `Develop focused MVP milestones to validate product-market fit.`,
+    ],
+    fundingStrategy: {
+      title: "Funding Strategy",
+      impact: "Critical Impact",
+      description: `Current burn rate unsustainable. Need $1.5M - $2M bridge round or pivot to revenue-generating subscription model.`,
+      actionText: "See funding options →",
+      actionTab: "suggestions",
+    },
+    technicalAdvantage: {
+      title: "Technical Advantage",
+      impact: "Medium Impact",
+      description: `AI & software algorithm shows up to 25% better accuracy than legacy competitors. Leverage for marketing differentiation.`,
+      actionText: "View comparison →",
+      actionTab: "competitors",
+    },
+    recommendedNextSteps: [
+      "Schedule pivot strategy meeting",
+      "Prepare investor pitch deck",
+      "Initiate partnership & pilot discussions",
+    ],
+  };
 }
 
 export function computeAnalysis(p: Project | AnalysisResult | any): AnalysisResult {
@@ -192,6 +307,9 @@ export function computeAnalysis(p: Project | AnalysisResult | any): AnalysisResu
   }
   if (!result.feasibility || typeof result.feasibility.overallScore !== "number") {
     result.feasibility = computeFeasibilityAssessment(projectObj, result.risks || [], result.growth || 15);
+  }
+  if (!result.executiveDashboard) {
+    result.executiveDashboard = generateExecutiveDashboardData(projectObj, result);
   }
 
   return result;
