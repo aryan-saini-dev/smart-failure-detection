@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Bar,
@@ -60,6 +60,14 @@ import {
 } from "@/components/ui/select";
 import Aurora from "@/components/Aurora";
 import { EnhancedSuggestionsView } from "@/components/EnhancedSuggestionsView";
+import { FeasibilityView } from "@/components/FeasibilityView";
+import { MarketView } from "@/components/MarketView";
+import { OverviewView } from "@/components/OverviewView";
+import {
+  getActiveSessionProject,
+  setActiveSessionProject,
+  subscribeSessionChange,
+} from "@/lib/session-store";
 
 export const Route = createFileRoute("/project-input")({
   validateSearch: (search: Record<string, unknown>): Partial<{
@@ -152,15 +160,23 @@ function ProjectInputPage() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<Project | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const navigate = useNavigate();
   const [tab, setTab] = useState<"overview" | "competitors" | "risk" | "market" | "suggestions" | "swot" | "feasibility">("overview");
   const [mobileView, setMobileView] = useState<"form" | "analysis">("form");
 
   const [liveAnalysis, setLiveAnalysis] = useState<any>(null);
   const [analyzedForm, setAnalyzedForm] = useState<FormState | null>(null);
   const [isAiSearching, setIsAiSearching] = useState(false);
+  const [isFormDirty, setIsFormDirty] = useState(false);
 
   useEffect(() => {
     getCurrentUser().then(({ user }) => setCurrentUser(user));
+    const active = getActiveSessionProject();
+    if (active && !form.name) {
+      setForm(active);
+      setLiveAnalysis(active.analysis_data || computeAnalysis(active));
+      setAnalyzedForm(active);
+    }
   }, []);
 
   const rawAnalysis = saved?.analysis_data || liveAnalysis;
@@ -168,12 +184,22 @@ function ProjectInputPage() {
   const activeProjectName = saved?.name || analyzedForm?.name || form.name.trim() || "Live Analysis";
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((f) => ({ ...f, [key]: value }));
+    const nextForm = { ...form, [key]: value };
+    setForm(nextForm);
+    setIsFormDirty(true);
+    if (rawAnalysis) {
+      setActiveSessionProject({ ...nextForm, analysis_data: rawAnalysis });
+    }
   }
 
   function fillDemo() {
-    setForm(getRandomDemoProject());
+    const demo = getRandomDemoProject();
+    setForm(demo);
+    setIsFormDirty(true);
     setError(null);
+    if (rawAnalysis) {
+      setActiveSessionProject({ ...demo, analysis_data: rawAnalysis });
+    }
   }
 
   function resetForm() {
@@ -182,6 +208,7 @@ function ProjectInputPage() {
     setSaved(null);
     setLiveAnalysis(null);
     setAnalyzedForm(null);
+    setIsFormDirty(false);
     setMobileView("form");
   }
 
@@ -199,22 +226,24 @@ function ProjectInputPage() {
 
     setRunningAnalysis(true);
     setIsAiSearching(true);
+    let finalRes = null;
     try {
       const { analysis: aiResult } = await analyzeProject(form);
       if (aiResult) {
-        setLiveAnalysis(aiResult);
-        setAnalyzedForm(form);
-        setMobileView("analysis");
+        finalRes = aiResult;
       }
     } catch (err) {
       console.warn("AI analysis network issue, using local computation:", err);
-      const fallback = computeAnalysis(form);
-      setLiveAnalysis(fallback);
-      setAnalyzedForm(form);
-      setMobileView("analysis");
+      finalRes = computeAnalysis(form);
     } finally {
+      if (!finalRes) finalRes = computeAnalysis(form);
+      setLiveAnalysis(finalRes);
+      setAnalyzedForm(form);
+      setIsFormDirty(false);
+      setMobileView("analysis");
       setRunningAnalysis(false);
       setIsAiSearching(false);
+      setActiveSessionProject({ ...form, analysis_data: finalRes });
     }
   }
 
@@ -446,22 +475,32 @@ function ProjectInputPage() {
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={handleRunAnalysis}
-              disabled={runningAnalysis || isAiSearching}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[color:var(--accent)] px-4 sm:px-6 py-2.5 sm:py-3 text-sm font-semibold text-[color:var(--accent-foreground)] transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_28px_rgba(245,158,11,0.45)] active:scale-[0.98] disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
-            >
-              {runningAnalysis || isAiSearching ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Analyzing market data…
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" /> Run analysis
-                </>
-              )}
-            </button>
+            {activeAnalysis && !isFormDirty ? (
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/dashboard" })}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 px-4 sm:px-6 py-2.5 sm:py-3 text-sm font-bold text-black transition-all duration-200 hover:bg-emerald-400 hover:shadow-[0_0_25px_rgba(16,185,129,0.45)] active:scale-[0.98]"
+              >
+                <Sparkles className="h-4 w-4" /> View Dashboard →
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleRunAnalysis}
+                disabled={runningAnalysis || isAiSearching}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[color:var(--accent)] px-4 sm:px-6 py-2.5 sm:py-3 text-sm font-semibold text-[color:var(--accent-foreground)] transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_28px_rgba(245,158,11,0.45)] active:scale-[0.98] disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+              >
+                {runningAnalysis || isAiSearching ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Analyzing market data…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" /> Run analysis
+                  </>
+                )}
+              </button>
+            )}
 
             {activeAnalysis && (
               <button
@@ -527,6 +566,13 @@ function ProjectInputPage() {
                     <Sparkles className="h-3 w-3 text-amber-400 shrink-0" />
                     <span>Live Market Research Active</span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate({ to: "/dashboard" })}
+                    className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/25 transition-all shrink-0"
+                  >
+                    <span>View Executive Dashboard →</span>
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 text-center sm:text-left sm:flex sm:items-center sm:gap-5 border-t sm:border-t-0 border-white/10 pt-2.5 sm:pt-0 w-full sm:w-auto shrink-0">
@@ -569,7 +615,7 @@ function ProjectInputPage() {
               </div>
 
               {/* Desktop Pill Tab Bar (Visible on Screens >= 640px) */}
-              <div className="hidden sm:flex gap-1.5 p-1 glass-card overflow-x-auto scrollbar-none snap-x max-w-full touch-pan-x">
+              <div className="hidden sm:flex gap-1 p-1 glass-card border border-white/10 rounded-xl overflow-x-auto scrollbar-none">
                 {(
                   [
                     { id: "overview", label: "Overview" },
@@ -583,145 +629,21 @@ function ProjectInputPage() {
                 ).map((t) => (
                   <button
                     key={t.id}
-                    onClick={() => setTab(t.id)}
-                    className={`whitespace-nowrap shrink-0 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] ${tab === t.id
-                      ? "bg-[color:var(--accent)]/20 text-white border border-[color:var(--accent)]/30 shadow-[0_0_15px_rgba(245,158,11,0.2)] font-semibold"
-                      : "text-[color:var(--muted-foreground)] hover:text-white hover:bg-white/5"
-                      }`}
+                    onClick={() => setTab(t.id as typeof tab)}
+                    className={`whitespace-nowrap shrink-0 rounded-lg px-4 py-2 text-xs sm:text-sm font-medium transition-all duration-200 ${
+                      tab === t.id
+                        ? "bg-[color:var(--accent)]/15 text-white border border-[color:var(--accent)]/40 shadow-[0_0_15px_rgba(245,158,11,0.25)] font-semibold"
+                        : "text-[color:var(--muted-foreground)] hover:text-white hover:bg-white/5"
+                    }`}
                   >
                     {t.label}
                   </button>
                 ))}
               </div>
 
-              {tab === "overview" && (() => {
-                const mlVerdict = activeAnalysis.mlPrediction || {
-                  prediction: (activeAnalysis.overallRisk > 50 ? "Failure" : "Success") as "Failure" | "Success",
-                  failureProbability: activeAnalysis.overallRisk,
-                  successProbability: 100 - activeAnalysis.overallRisk,
-                };
-                const isSuccess = mlVerdict.prediction === "Success";
-
-                return (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-                    {/* Bento Tile 1: 6-Month Revenue Projection */}
-                    <ChartCard title="6-Month Revenue Projection" icon={TrendingUp}>
-                      <div className="w-full min-w-0 overflow-hidden h-[210px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={activeAnalysis.projections}>
-                            <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                            <XAxis dataKey="month" stroke="#71717A" fontSize={11} />
-                            <YAxis stroke="#71717A" fontSize={11} />
-                            <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                            <Line
-                              type="monotone"
-                              dataKey="revenue"
-                              stroke="#F59E0B"
-                              strokeWidth={2.5}
-                              dot={{ r: 3.5, fill: "#F59E0B" }}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="cost"
-                              stroke="#71717A"
-                              strokeWidth={1.5}
-                              strokeDasharray="4 4"
-                              dot={false}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </ChartCard>
-
-                    {/* Bento Tile 2: Risk Profile Breakdown */}
-                    <ChartCard title="Risk Profile Breakdown" icon={AlertTriangle}>
-                      <ResponsiveContainer width="100%" height={210}>
-                        <BarChart data={activeAnalysis.risks} layout="vertical" margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                          <CartesianGrid stroke="rgba(255,255,255,0.05)" />
-                          <XAxis type="number" domain={[0, 100]} stroke="#71717A" fontSize={11} />
-                          <YAxis
-                            type="category"
-                            dataKey="category"
-                            stroke="#A1A1AA"
-                            fontSize={11}
-                            width={80}
-                          />
-                          <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                          <Bar dataKey="score" radius={[0, 6, 6, 0]}>
-                            {activeAnalysis.risks.map((r: any, i: number) => (
-                              <Cell
-                                key={i}
-                                fill={r.score > 65 ? "#ef4444" : r.score > 45 ? "#F59E0B" : "#10b981"}
-                              />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </ChartCard>
-
-                    {/* Bento Tile 3: Machine Learning Venture Verdict Card (Full Width) */}
-                    <div className={`md:col-span-2 glass-card p-4 sm:p-5 border transition-all duration-300 ${
-                      isSuccess 
-                        ? "border-emerald-500/30 bg-gradient-to-r from-emerald-950/30 via-emerald-950/10 to-transparent shadow-[0_0_30px_rgba(16,185,129,0.12)]" 
-                        : "border-red-500/30 bg-gradient-to-r from-red-950/30 via-red-950/10 to-transparent shadow-[0_0_30px_rgba(239,68,68,0.12)]"
-                    }`}>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 sm:p-2.5 rounded-xl border shrink-0 ${
-                            isSuccess 
-                              ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]" 
-                              : "bg-red-500/15 text-red-400 border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
-                          }`}>
-                            <Cpu className="h-4 w-4 sm:h-5 sm:w-5" />
-                          </div>
-                          <div>
-                            <h3 className="font-display text-sm sm:text-base font-semibold tracking-tight text-[color:var(--foreground)]">
-                              ML Venture Viability Intelligence
-                            </h3>
-                            <p className="mt-0.5 text-[11px] sm:text-xs text-[color:var(--muted-foreground)]">
-                              Trained on 48,000+ venture outcomes & real-time capital velocity signals
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 self-start sm:self-center shrink-0">
-                          <span className={`rounded-lg px-2.5 py-1 sm:px-3 sm:py-1.5 font-display text-[11px] sm:text-xs font-semibold uppercase tracking-wider border shadow-sm ${
-                            isSuccess 
-                              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/35 shadow-[0_0_15px_rgba(16,185,129,0.25)]" 
-                              : "bg-red-500/20 text-red-300 border-red-500/35 shadow-[0_0_15px_rgba(239,68,68,0.25)]"
-                          }`}>
-                            Verdict: {isSuccess ? "High Viability / Proceed" : "Elevated Failure Risk"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Dual Progress Meter */}
-                      <div className="mt-3 pt-2.5 sm:mt-3.5 sm:pt-3 border-t border-white/5">
-                        <div className="flex justify-between items-center text-[11px] sm:text-xs font-medium mb-1.5 sm:mb-2">
-                          <span className="text-emerald-400 font-sans flex items-center gap-1 sm:gap-1.5">
-                            <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-emerald-400 inline-block shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-                            {Math.round(mlVerdict.successProbability)}% Success Viability
-                          </span>
-                          <span className="text-red-400 font-sans flex items-center gap-1 sm:gap-1.5">
-                            <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-red-400 inline-block shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
-                            {Math.round(mlVerdict.failureProbability)}% Failure Risk
-                          </span>
-                        </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-white/5 flex">
-                          <div 
-                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-700 shadow-[0_0_10px_rgba(16,185,129,0.5)]" 
-                            style={{ width: `${mlVerdict.successProbability}%` }}
-                          />
-                          <div 
-                            className="h-full bg-gradient-to-r from-red-500 to-rose-400 transition-all duration-700 shadow-[0_0_10px_rgba(239,68,68,0.5)]" 
-                            style={{ width: `${mlVerdict.failureProbability}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
+              {tab === "overview" && (
+                <OverviewView analysis={activeAnalysis} project={saved || analyzedForm || form} />
+              )}
 
               {tab === "competitors" && (
                 <div className="glass-card p-3.5 sm:p-6 flex-1 flex flex-col justify-between w-full min-w-0 overflow-hidden">
@@ -781,63 +703,12 @@ function ProjectInputPage() {
                 <SwotView swot={activeAnalysis.swot} />
               )}
 
-              {tab === "feasibility" && activeAnalysis.feasibility && (
-                <FeasibilityView feasibility={activeAnalysis.feasibility} />
+              {tab === "feasibility" && (
+                <FeasibilityView feasibility={activeAnalysis.feasibility} analysis={activeAnalysis} />
               )}
 
               {tab === "market" && (
-                <div className="grid gap-3.5 sm:gap-5 grid-cols-1 md:grid-cols-2 flex-1 w-full min-w-0 overflow-hidden">
-                  <ChartCard title="Adoption Segments" icon={Users}>
-                    <div className="w-full min-w-0 overflow-hidden h-[220px] sm:h-[240px] flex items-center justify-center">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                          <Pie
-                            data={activeAnalysis.marketSegments}
-                            dataKey="value"
-                            nameKey="name"
-                            cx="50%"
-                            cy="42%"
-                            innerRadius={36}
-                            outerRadius={62}
-                            paddingAngle={4}
-                          >
-                            {activeAnalysis.marketSegments.map((_: any, i: number) => (
-                              <Cell key={i} fill={["#F59E0B", "#fbbf24", "#71717A", "#3f3f46"][i % 4]} />
-                            ))}
-                          </Pie>
-                          <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                          <Legend
-                            verticalAlign="bottom"
-                            align="center"
-                            wrapperStyle={{ paddingTop: "6px", fontSize: 11, color: "#A1A1AA" }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </ChartCard>
-
-                  <div className="glass-card p-4 sm:p-6 flex flex-col justify-between">
-                    <div>
-                      <h3 className="font-display text-base sm:text-lg font-semibold">Positioning Summary</h3>
-                      <p className="mt-1 text-xs text-[color:var(--muted-foreground)]">
-                        {form.description || saved?.description || "Startup venture evaluation"}
-                      </p>
-                      <dl className="mt-4 space-y-2.5 sm:space-y-3 text-xs">
-                        <Row label="Target market" value={form.target_market || saved?.target_market || "—"} />
-                        <Row label="Model" value={form.business_model || saved?.business_model || "—"} />
-                        <Row label="Industry growth" value={`${activeAnalysis.growth}% projected annual`} />
-                        <Row
-                          label="Recommended focus"
-                          value={
-                            activeAnalysis.overallRisk > 60
-                              ? "De-risk before scaling — validate demand and unit economics"
-                              : "Sharpen wedge and accelerate distribution"
-                          }
-                        />
-                      </dl>
-                    </div>
-                  </div>
-                </div>
+                <MarketView project={saved || analyzedForm || form} analysis={activeAnalysis} />
               )}
 
               {tab === "suggestions" && (
@@ -1120,97 +991,7 @@ function SwotView({ swot }: { swot: NonNullable<import("@/lib/analysis").Analysi
   );
 }
 
-function FeasibilityView({ feasibility }: { feasibility: NonNullable<import("@/lib/analysis").AnalysisResult["feasibility"]> }) {
-  const pillars = [
-    { title: "Technical Feasibility", data: feasibility.technical, icon: Cpu },
-    { title: "Financial Feasibility", data: feasibility.financial, icon: DollarSign },
-    { title: "Market Feasibility", data: feasibility.market, icon: TrendingUp },
-    { title: "Operational Feasibility", data: feasibility.operational, icon: Compass },
-  ];
 
-  const gradeColor =
-    feasibility.grade === "A+" || feasibility.grade === "A"
-      ? "text-emerald-400 border-emerald-500/40 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
-      : feasibility.grade === "B"
-      ? "text-amber-400 border-amber-500/40 bg-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.2)]"
-      : "text-rose-400 border-rose-500/40 bg-rose-500/10 shadow-[0_0_20px_rgba(244,63,94,0.2)]";
-
-  return (
-    <div className="space-y-3 sm:space-y-4 flex-1 w-full min-w-0 overflow-hidden">
-      {/* Header Feasibility Summary Banner */}
-      <div className="glass-card p-3.5 sm:p-5 border border-white/10 bg-gradient-to-r from-white/[0.04] to-transparent flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 w-full min-w-0">
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-          <div className={`h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl border flex items-center justify-center font-display text-xl sm:text-2xl font-bold shrink-0 ${gradeColor}`}>
-            {feasibility.grade}
-          </div>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <h3 className="font-display text-base sm:text-lg font-semibold tracking-tight">Project Feasibility Rating</h3>
-              <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full border border-white/15 bg-white/5 text-[color:var(--foreground)]">
-                {feasibility.status}
-              </span>
-            </div>
-            <p className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs text-[color:var(--muted-foreground)]">
-              Multi-dimensional viability score across technical, capital, market & operational pillars.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
-          <div className="text-right">
-            <p className="text-[10px] font-mono uppercase text-[color:var(--muted-foreground)]">Overall Index</p>
-            <p className="font-display text-xl sm:text-2xl font-bold text-[color:var(--accent)]">{feasibility.overallScore}%</p>
-          </div>
-        </div>
-      </div>
-
-      {/* 4 Pillars Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full min-w-0">
-        {pillars.map((p) => {
-          const Icon = p.icon;
-          const scoreColor = p.data.score >= 75 ? "bg-emerald-500" : p.data.score >= 50 ? "bg-amber-500" : "bg-rose-500";
-          return (
-            <div key={p.title} className="glass-card p-3.5 sm:p-5 flex flex-col justify-between w-full min-w-0">
-              <div>
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Icon className="h-4 w-4 text-[color:var(--accent)] shrink-0" />
-                    <h4 className="font-display text-xs sm:text-sm font-semibold truncate">{p.title}</h4>
-                  </div>
-                  <span className="font-mono text-xs font-bold text-[color:var(--foreground)] shrink-0">
-                    {p.data.score}/100
-                  </span>
-                </div>
-                <div className="mt-2.5 sm:mt-3 h-2 overflow-hidden rounded-full bg-white/5 w-full">
-                  <div className={`h-full rounded-full ${scoreColor}`} style={{ width: `${p.data.score}%` }} />
-                </div>
-              </div>
-              <p className="mt-2.5 sm:mt-3 text-xs text-[color:var(--muted-foreground)] leading-relaxed break-words">{p.data.statusNote}</p>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Key Feasibility Recommendations */}
-      {feasibility.keyTakeaways && feasibility.keyTakeaways.length > 0 && (
-        <div className="glass-card p-3.5 sm:p-5 border border-white/10 w-full min-w-0">
-          <h4 className="font-display text-xs sm:text-sm font-semibold flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-amber-400 shrink-0" />
-            Key Strategic Feasibility Guidance
-          </h4>
-          <ul className="mt-2.5 sm:mt-3 space-y-2 text-xs text-[color:var(--foreground)]/90">
-            {feasibility.keyTakeaways.map((takeaway, i) => (
-              <li key={i} className="flex items-start gap-2 min-w-0">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0 mt-1.5" />
-                <span className="break-words flex-1 min-w-0">{takeaway}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function EnhancedRiskEngineView({ risks, overallRisk }: { risks: import("@/lib/analysis").RiskFactor[]; overallRisk: number }) {
   return (

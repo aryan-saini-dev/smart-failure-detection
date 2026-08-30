@@ -6,6 +6,9 @@ import { computeAnalysis, type Project } from "@/lib/analysis";
 import { getDemoProject, hasDemoSession } from "@/lib/demo-session";
 import { getProject } from "@/lib/local-api";
 import { EnhancedSuggestionsView } from "@/components/EnhancedSuggestionsView";
+import { ExecutiveDashboard } from "@/components/ExecutiveDashboard";
+import { exportAnalysisToPdf } from "@/lib/pdf-export";
+import { Download } from "lucide-react";
 
 export const Route = createFileRoute("/projects/$projectId")({ component: SavedAnalysisPage });
 
@@ -13,7 +16,7 @@ function SavedAnalysisPage() {
   const { projectId } = Route.useParams();
   const [project, setProject] = useState<Project | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"overview" | "competitors" | "risk" | "market" | "suggestions" | "swot" | "feasibility">("overview");
+  const [tab, setTab] = useState<"dashboard" | "overview" | "competitors" | "risk" | "market" | "suggestions" | "swot" | "feasibility">("dashboard");
   const analysis = useMemo(() => (project ? computeAnalysis(project) : null), [project]);
 
   useEffect(() => {
@@ -38,6 +41,7 @@ function SavedAnalysisPage() {
   if (!project || !analysis) return <main className="mx-auto max-w-6xl px-6 py-16"><div className="glass-card h-72 animate-pulse" /></main>;
 
   const tabLabels: Record<string, string> = {
+    dashboard: "Dashboard",
     overview: "Overview",
     risk: "Risk Engine",
     swot: "SWOT Analysis",
@@ -50,7 +54,11 @@ function SavedAnalysisPage() {
   return <main className="mx-auto max-w-6xl px-6 py-12 md:px-8 md:py-16">
     <div className="flex items-center justify-between">
       <Link to="/profile" className="inline-flex items-center gap-2 text-sm text-[color:var(--muted-foreground)] transition-colors hover:text-[color:var(--foreground)]"><ArrowLeft className="h-4 w-4" />Back to history</Link>
-      <Link to="/project-input" search={{ name: project.name, industry: project.industry, business_model: project.business_model, target_market: project.target_market, budget: project.budget, description: project.description }} className="inline-flex items-center gap-2 rounded-md bg-white/5 px-3 py-1.5 text-sm font-medium text-[color:var(--foreground)] transition-colors hover:bg-white/10"><CopyPlus className="h-4 w-4" />Duplicate & Edit</Link>
+      <div className="flex items-center gap-2">
+        <button onClick={() => exportAnalysisToPdf(project, analysis)} className="inline-flex items-center gap-1.5 rounded-md bg-white/10 border border-white/15 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20 transition-colors"><Download className="h-3.5 w-3.5 text-[color:var(--accent)]" />Export PDF</button>
+        <button onClick={() => setTab("dashboard")} className="inline-flex items-center gap-1.5 rounded-md bg-[color:var(--accent)]/15 border border-[color:var(--accent)]/30 px-3 py-1.5 text-xs font-semibold text-[color:var(--accent)] hover:bg-[color:var(--accent)]/25 transition-colors"><Sparkles className="h-3.5 w-3.5" />View Dashboard</button>
+        <Link to="/project-input" search={{ name: project.name, industry: project.industry, business_model: project.business_model, target_market: project.target_market, budget: project.budget, description: project.description }} className="inline-flex items-center gap-2 rounded-md bg-white/5 px-3 py-1.5 text-sm font-medium text-[color:var(--foreground)] transition-colors hover:bg-white/10"><CopyPlus className="h-4 w-4" />Duplicate & Edit</Link>
+      </div>
     </div>
     <section className="glass-card mt-5 p-6 md:p-8">
       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[color:var(--accent)]">Saved analysis</p>
@@ -64,7 +72,7 @@ function SavedAnalysisPage() {
           onChange={(e) => setTab(e.target.value as typeof tab)}
           className="w-full appearance-none rounded-lg bg-[color:var(--accent)]/15 border border-[color:var(--accent)]/30 px-3.5 py-2.5 pr-10 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
         >
-          {(["overview", "risk", "swot", "feasibility", "competitors", "market", "suggestions"] as const).map((item) => (
+          {(["dashboard", "overview", "risk", "swot", "feasibility", "competitors", "market", "suggestions"] as const).map((item) => (
             <option key={item} value={item} className="bg-[color:var(--background-alt)] text-white">
               {tabLabels[item]}
             </option>
@@ -76,8 +84,9 @@ function SavedAnalysisPage() {
 
     {/* Desktop Tab Bar (Visible on Screens >= 640px) */}
     <div className="hidden sm:flex mt-6 overflow-x-auto rounded-lg border border-white/10 bg-white/[0.03] p-1">
-      {(["overview", "risk", "swot", "feasibility", "competitors", "market", "suggestions"] as const).map((item) => <button key={item} onClick={() => setTab(item)} className={`min-w-max flex-1 rounded-md px-4 py-2 text-sm font-medium capitalize transition-colors ${tab === item ? "bg-[color:var(--accent)]/15 text-[color:var(--foreground)]" : "text-[color:var(--muted-foreground)]"}`}>{tabLabels[item]}</button>)}
+      {(["dashboard", "overview", "risk", "swot", "feasibility", "competitors", "market", "suggestions"] as const).map((item) => <button key={item} onClick={() => setTab(item)} className={`min-w-max flex-1 rounded-md px-4 py-2 text-sm font-medium capitalize transition-colors ${tab === item ? "bg-[color:var(--accent)]/15 text-[color:var(--foreground)]" : "text-[color:var(--muted-foreground)]"}`}>{tabLabels[item]}</button>)}
     </div>
+    {tab === "dashboard" && <ExecutiveDashboard analysis={analysis} project={project} onTabSelect={(t) => setTab(t as typeof tab)} />}
     {tab === "overview" && <Overview project={project} analysis={analysis} />}
     {tab === "competitors" && <Competitors analysis={analysis} />}
     {tab === "risk" && <Risks analysis={analysis} />}
