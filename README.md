@@ -8,7 +8,7 @@
 
 # 🚀 Smart Failure Detection
 
-### *AI-Powered Startup Failure Prediction & Market Intelligence Platform*
+### *AI-Powered Startup Failure Prediction & Market Intelligence Platform* 
 
 [![React 19](https://img.shields.io/badge/React-19.0+-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -23,7 +23,6 @@
 [![License MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 </div>
-
 ---
 
 ## 👥 Core Team Members
@@ -212,7 +211,7 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 
 ### Core Modules
 
-| Module | Responsibility | File |
+| Module | Responsibility | File | 
 | :--- | :--- | :--- |
 | 📊 **Analysis Engine** | Projections, industry CAGR growth, and risk rule calculations | `src/lib/analysis.ts` |
 | 🤖 **AI & ML Orchestrator** | Gemini API integration, ML feature extraction & process spawning | `server/index.js` |
