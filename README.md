@@ -82,7 +82,7 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 
 ## 💡 Key Value Propositions
 
-| Target User | Core Value Proposition |
+| Target User | Core Value Proposition | 
 | :--- | :--- |
 | 🚀 **Early-Stage Founders** | Stress-test pitch assumptions, identify blindspots, and calculate runway before spending capital |
 | 💼 **Angel Investors & VCs** | Rapid quantitative pre-screening of inbound deal flow and pitch decks |
