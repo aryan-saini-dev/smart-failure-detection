@@ -56,14 +56,14 @@
 
 ## 🌟 Introduction of the Project
 
-An intelligent, full-stack decision-support workspace called **Smart Failure Detection** was created to assist product teams, venture capitalists, and entrepreneurs in assessing the feasibility of early-stage firms both numerically and qualitatively.
+**Smart Failure Detection** is an intelligent, full-stack decision-support workspace designed to help entrepreneurs, venture capitalists, and product teams evaluate early-stage enterprises' viability both qualitatively and statistically.
 
-The platform functions as an automated venture due diligence analyst by fusing the real-time reasoning of **Google Gemini 2.5 Flash** with the predictive power of a **custom Machine Learning model** (trained on 66,000+ historical startup outcomes from the [Crunchbase Startup Success/Fail Dataset on Kaggle](https://www.kaggle.com/datasets/yanmaksi/big-startup-secsees-fail-dataset-from crunchbase).
+By combining the predictive capabilities of a **custom Machine Learning model** (trained on 66,000+ historical startup outcomes from the [Crunchbase Startup Success/Fail Dataset on Kaggle](https://www.kaggle.com/datasets/yanmaksi/big-startup-secsees-fail-dataset-from crunchbase) with the real-time reasoning of **Google Gemini 2.5 Flash**, the platform serves as an automated venture due diligence analyst.
 
-### 🎯 What We Offer
-- 🧠 **Statistical Failure & Success Probability**: Exact probability of risk, from the past of Crunchbase venture data.
-- 🔍 **Automated Competitor Intelligence**: Discover direct rivals, strengths, weaknesses, and market overlap in real-time.
-- 📈 **Predictive Financial Projections**: Tailored 6-month revenue and burn rate projections based on budget and industry benchmarks. 
+### 🎯 What We Provide
+- 🧠 **Statistical Failure & Success Probability**: Accurate risk probability based on historical Crunchbase venture data.
+- 🔍 **Automated Competitor Intelligence**: Get real-time information about direct competitors, strengths, weaknesses, and market overlap.
+- 📈 **Predictive Financial Projections**: Customized six-month burn rate and revenue forecasts based on industry benchmarks and budget.
 - 🛡️  **Cloud-Synced Scenario Modeling**: Instant history saving and versioning with Supabase PostgreSQL and Row Level Security.
 
 ---
