@@ -8,7 +8,7 @@
 
 # 🚀 Smart Failure Detection
 
-### *AI-Powered Startup Failure Prediction & Market Intelligence Platform* 
+### *AI-Powered Startup Failure Prediction & Market Intelligence Platform*
 
 [![React 19](https://img.shields.io/badge/React-19.0+-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -23,6 +23,7 @@
 [![License MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 </div>
+
 ---
 
 ## 👥 Core Team Members
@@ -56,15 +57,17 @@
 
 ## 🌟 Introduction of the Project
 
-**Smart Failure Detection** is an intelligent, full-stack decision-support workspace designed to help entrepreneurs, venture capitalists, and product teams evaluate early-stage enterprises' viability both qualitatively and statistically.
+An intelligent, full-stack decision-support workspace called **Smart Failure Detection** was created to assist product teams, venture capitalists, and entrepreneurs in assessing the feasibility of early-stage firms both numerically and qualitatively.
 
-By combining the predictive capabilities of a **custom Machine Learning model** (trained on 66,000+ historical startup outcomes from the [Crunchbase Startup Success/Fail Dataset on Kaggle](https://www.kaggle.com/datasets/yanmaksi/big-startup-secsees-fail-dataset-from crunchbase) with the real-time reasoning of **Google Gemini 2.5 Flash**, the platform serves as an automated venture due diligence analyst.
+The platform functions as an automated venture due diligence analyst by fusing the real-time reasoning of **Google Gemini 2.5 Flash** with the predictive power of a **custom Machine Learning model** (trained on 66,000+ historical startup outcomes from the [Crunchbase Startup Success/Fail Dataset on Kaggle](https://www.kaggle.com/datasets/yanmaksi/big-startup-secsees-fail-dataset-from-crunchbase)).
 
-### 🎯 What We Provide
-- 🧠 **Statistical Failure & Success Probability**: Accurate risk probability based on historical Crunchbase venture data.
-- 🔍 **Automated Competitor Intelligence**: Get real-time information about direct competitors, strengths, weaknesses, and market overlap.
-- 📈 **Predictive Financial Projections**: Customized six-month burn rate and revenue forecasts based on industry benchmarks and budget.
-- 🛡️  **Cloud-Synced Scenario Modeling**: Instant history saving and versioning with Supabase PostgreSQL and Row Level Security.
+### 🎯 What We Offer
+- 🧠 **Statistical Failure & Success Probability**: Exact probability of risk derived from Crunchbase venture training data.
+- 📊 **Executive Risk & Assessment Dashboard**: A 12-column Bento Grid workspace analyzing vulnerability index scores, 6-month trajectories, and strategic action roadmaps.
+- 🔍 **Automated Competitor Intelligence**: Discover direct rivals, strengths, weaknesses, and market overlap in real-time.
+- 📄 **Publication-Ready PDF Reports**: Direct vector `.pdf` document exports with structured vulnerability tables, feasibility scores, and recommendations.
+- 📈 **Predictive Financial Projections**: Tailored 6-month revenue and burn rate projections based on budget and industry benchmarks.
+- 🛡️ **Cloud-Synced Scenario Modeling**: Instant history saving, two-way session persistence, and versioning with Supabase PostgreSQL and Row Level Security.
 
 ---
 
@@ -82,7 +85,7 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 
 ## 💡 Key Value Propositions
 
-| Target User | Core Value Proposition | 
+| Target User | Core Value Proposition |
 | :--- | :--- |
 | 🚀 **Early-Stage Founders** | Stress-test pitch assumptions, identify blindspots, and calculate runway before spending capital |
 | 💼 **Angel Investors & VCs** | Rapid quantitative pre-screening of inbound deal flow and pitch decks |
@@ -93,23 +96,30 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 
 ## ✨ Key Features
 
+### 📊 **Executive Risk & Assessment Dashboard (`/dashboard`)**
+- High-UX **12-Column Bento Grid Layout** featuring 4 hero stat cards: Overall Risk Index, Success Confidence, Market Vulnerability, and Technical Readiness.
+- **6-Month Risk & Growth Trajectory Chart**: Dual Recharts area visualization comparing risk score evolution against projected revenue growth.
+- **Executive Verdict & Key Findings**: High Priority findings with glowing indicators.
+- **Strategic Action Roadmap**: Numbered step-by-step checklist to systematically de-risk ventures.
+
+### 📄 **Publication-Ready PDF Export Generator**
+- Direct client-side `.pdf` report generation powered by **jsPDF** (`exportAnalysisToPdf()`).
+- Programmatically formats multi-page vector documents with executive brief, risk vulnerability table, competitor matrix, feasibility breakdown, and strategic suggestions.
+- Direct download triggering without browser print prompt interruptions.
+
 ### 🧠 **Quantitative Machine Learning Conclusion**
 - An XGBoost and Random Forest ensemble-based custom-trained classification model (`startup_model_optimized.joblib`).
-- Total Capital, Funding Rounds, Funding Duration, Velocity to First Funding, Country Code, and Industry Category are the seven major venture attributes that are evaluated.
+- Evaluates total capital, funding rounds, funding duration, velocity to first funding, country code, and industry categories.
 - Clear **Failure vs. Success Probability** confidence meters are provided.
 
-### 🤖 Market Due Diligence for Generative AI
-- Google Gemini 2.5 Flash is the power source.
+### 🤖 **Generative AI Market Due Diligence**
+- Google Gemini 2.5 Flash integration via backend orchestrator.
 - Constructs organized market positioning matrices by analyzing unstructured text descriptions.
 - Identifies immediate rivals with particular operational advantages and disadvantages.
 
-### 📊 **Multi-Dimensional Risk Breakdown**
-- Real-time scoring across four pillars: **Market Risk**, **Capital Risk**, **Execution Risk**, and **Competitive Risk**.
-- Color-coded hazard gauges highlighting areas needing urgent founder intervention.
-
-### 📈 **Dynamic Financial Ramp & Runway**
-- Automated 6-month financial trajectory modeling month-by-month revenue vs. operational costs.
-- Automatically adjusts according to industry-specific CAGR growth rates.          
+### 🔄 **Two-Way Live Session Persistence**
+- Centralized session store (`src/lib/session-store.ts`) synchronizing active live assessments.
+- Form inputs and analysis parameters seamlessly persist when switching back and forth between `/project-input` and `/dashboard` with zero data loss.
 
 ### 🗄️ **History, Duplication & Guest Session**
 - **Supabase Cloud Sync**: Save multiple startup scenarios to track how pivoting business models alters risk.
@@ -120,13 +130,14 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 
 ## 🛠️ Tech Stack
 
-### **Frontend Interface**
+### **Frontend Interface & Document Generation**
 | Technology | Role |
 | :--- | :--- |
 | ![React](https://img.shields.io/badge/React-19.0+-61DAFB?logo=react&logoColor=black) | Component architecture and state management |
 | ![TanStack Router](https://img.shields.io/badge/TanStack-Router-FF4154?logo=react&logoColor=white) | Fully type-safe client-side routing & navigation |
 | ![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS%203.4+-38B2AC?logo=tailwind-css&logoColor=white) | Modern dark-mode styling and glassmorphism design system |
-| ![Recharts](https://img.shields.io/badge/Recharts-2.15+-22B5BF?logo=d3.js&logoColor=white) | Interactive financial charts, risk meters, and segment breakdowns |
+| ![Recharts](https://img.shields.io/badge/Recharts-2.15+-22B5BF?logo=d3.js&logoColor=white) | Interactive financial charts, dual risk curves, and segment breakdowns |
+| ![jsPDF](https://img.shields.io/badge/jsPDF-2.5+-E11D48?logo=adobe-acrobat-reader&logoColor=white) | Programmatic client-side vector PDF document export engine |
 | ![Lucide React](https://img.shields.io/badge/Lucide-Icons-F56565?logo=feather&logoColor=white) | Vector icons and clean UI aesthetics |
 
 ### **Backend & Inference API**
@@ -134,9 +145,9 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 | :--- | :--- |
 | ![Node.js](https://img.shields.io/badge/Node.js-22%2B-339933?logo=nodedotjs&logoColor=white) | Custom HTTP API server handling cross-origin requests & proxying |
 | ![Child Process](https://img.shields.io/badge/Node.js-execFile%20Bridge-gray?logo=nodedotjs&logoColor=white) | High-performance asynchronous execution bridge to Python ML engine |
-| ![Supabase JS](https://img.shields.io/badge/Supabase-SDK%202.49+-3ECF8E?logo=supabase&logoColor=white) | Cloud database operations and authentication middleware 
+| ![Supabase JS](https://img.shields.io/badge/Supabase-SDK%202.49+-3ECF8E?logo=supabase&logoColor=white) | Cloud database operations and authentication middleware |
 
-### **Machine Learning & AI Engine** 
+### **Machine Learning & AI Engine**
 | Technology | Role |
 | :--- | :--- |
 | ![Google Gemini](https://img.shields.io/badge/Gemini%202.5-Flash%20API-8E75B2?logo=google&logoColor=white) | Live market research, competitor extraction & feature synthesis |
@@ -165,10 +176,10 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │            FRONTEND (React 19 + TanStack)                │  │
 │  │  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐     │  │
-│  │  │Landing Page │  │Project Input │  │Risk Dashboard│     │  │
+│  │  │Landing Page │  │Project Input │  │Executive Dash│     │  │
 │  │  └─────────────┘  └──────────────┘  └──────────────┘     │  │
 │  │  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐     │  │
-│  │  │Auth / Demo  │  │User Profile  │  │Saved Reports │     │  │
+│  │  │Auth / Demo  │  │User Profile  │  │PDF Generator │     │  │
 │  │  └─────────────┘  └──────────────┘  └──────────────┘     │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                         │                                      │
@@ -194,7 +205,7 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 │  │  │Market Intel  │  │Competitors   │  │Risk Scorer   │    │  │
 │  │  └──────────────┘  └──────────────┘  └──────────────┘    │  │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │  │
-│  │  │Projections   │  │ML Inference  │  │Suggestions   │    │  │
+│  │  │Projections   │  │ML Inference  │  │Session Sync  │    │  │
 │  │  └──────────────┘  └──────────────┘  └──────────────┘    │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                                                                │
@@ -211,9 +222,12 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 
 ### Core Modules
 
-| Module | Responsibility | File | 
+| Module | Responsibility | File |
 | :--- | :--- | :--- |
-| 📊 **Analysis Engine** | Projections, industry CAGR growth, and risk rule calculations | `src/lib/analysis.ts` |
+| 📊 **Analysis Engine** | Projections, CAGR growth, and executive dashboard metrics | `src/lib/analysis.ts` |
+| 📄 **PDF Report Generator** | Vector PDF document exporter built on jsPDF | `src/lib/pdf-export.ts` |
+| 🔄 **Session Storage Store** | Two-way state persistence for live assessment data | `src/lib/session-store.ts` |
+| 🍱 **Executive Dashboard** | 12-column Bento Box dashboard component | `src/components/ExecutiveDashboard.tsx` |
 | 🤖 **AI & ML Orchestrator** | Gemini API integration, ML feature extraction & process spawning | `server/index.js` |
 | 🧠 **ML Predictor** | Machine learning inference via XGBoost decision trees | `server/ml/predict.py` |
 | 📈 **Model Training** | Model training & optimization on 66k+ Kaggle Crunchbase records | `Dataset/train_model.py` |
@@ -225,7 +239,7 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 
 ## 🔄 AI & Machine Learning Pipeline
 
-### 📊 End-to-End Predictive Data Flow 
+### 📊 End-to-End Predictive Data Flow
 
 ```mermaid
 graph TD
@@ -241,9 +255,9 @@ graph TD
     
     MODEL --> PROB["6️⃣ STATISTICAL PROBABILITY<br/>• Failure Probability %<br/>• Success Probability %<br/>• Quantitative Verdict (Success / Failure)"]
     
-    PROB --> MERGE["7️⃣ UNIFIED PAYLOAD SYNTHESIS<br/>• Combine Gemini qualitative insights<br/>• Attach ML statistical verdict<br/>• Generate strategic founder suggestions"]
+    PROB --> MERGE["7️⃣ UNIFIED PAYLOAD SYNTHESIS<br/>• Combine Gemini qualitative insights<br/>• Attach ML statistical verdict<br/>• Synthesize Executive Dashboard & PDF Payload"]
     
-    MERGE --> UI["8️⃣ REACTIVE DASHBOARD<br/>• Render Failure / Success Verdict Card<br/>• Plot 6-Month Projections & Competitors<br/>• Interactive Risk Gauges"]
+    MERGE --> UI["8️⃣ REACTIVE DASHBOARD & WORKSPACE<br/>• Render Bento Grid Executive Dashboard<br/>• Plot 6-Month Projections & Competitors<br/>• Generate Direct PDF Export"]
     
     UI --> DB[("9️⃣ SUPABASE CLOUD SAVE<br/>• Persist project record to PostgreSQL<br/>• Associate with authenticated user ID")]
     
@@ -432,18 +446,28 @@ smart-failure-detection/
 │   └── ml/
 │       └── predict.py                      # Python ML inference bridge
 ├── src/                                    # Frontend Application (React 19)
-│   ├── components/                         # UI Components & Aurora Canvas
+│   ├── components/                         # UI Components & Dashboard Views
+│   │   ├── Aurora.tsx                      # WebGL Aurora Canvas backdrop
+│   │   ├── ExecutiveDashboard.tsx          # 12-Column Bento Grid Executive Dashboard
+│   │   ├── OverviewView.tsx                # Shared 2-Column Overview Component
+│   │   ├── FeasibilityView.tsx             # Shared 4-Pillar Feasibility Component
+│   │   ├── MarketView.tsx                  # Shared Market & Segments Component
+│   │   ├── EnhancedSuggestionsView.tsx     # Strategic Suggestions Component
+│   │   └── site-nav.tsx                    # Header Navigation Bar
 │   ├── lib/
-│   │   ├── analysis.ts                     # Financial algorithms & type definitions
+│   │   ├── analysis.ts                     # Financial algorithms & data models
+│   │   ├── pdf-export.ts                   # Client-side jsPDF document generator
+│   │   ├── session-store.ts                # Live session state persistence manager
 │   │   ├── local-api.ts                    # Backend API client
 │   │   └── supabase.ts                     # Supabase SDK client
 │   └── routes/                             # TanStack Router Pages
 │       ├── index.tsx                       # Landing Page
 │       ├── login.tsx                       # Authentication & Guest Demo
-│       ├── project-input.tsx               # Startup Analysis Form & Dashboard
+│       ├── project-input.tsx               # Startup Submission & Analysis Panel
+│       ├── dashboard.tsx                   # Dedicated Executive Dashboard Route
 │       ├── profile.tsx                     # Saved Assessment History
 │       └── projects/
-│           └── $projectId.tsx              # Detailed Project View
+│           └── $projectId.tsx              # Detailed Saved Analysis View
 ├── Dockerfile                              # Production Docker container for Render
 ├── package.json                            # Node dependencies
 ├── requirements.txt                        # Python ML dependencies
@@ -456,6 +480,12 @@ smart-failure-detection/
 
 ### 📜 Software License
 This project is licensed under the **MIT License**. See the `LICENSE` file for details.
+
+---
+
+## ⭐ Star Us!
+
+If you find this project helpful for startup validation or machine learning exploration, please give it a ⭐ !
 
 ---
 
