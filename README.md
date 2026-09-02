@@ -225,7 +225,7 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 
 ## 🔄 AI & Machine Learning Pipeline
 
-### 📊 End-to-End Predictive Data Flow
+### 📊 End-to-End Predictive Data Flow 
 
 ```mermaid
 graph TD
