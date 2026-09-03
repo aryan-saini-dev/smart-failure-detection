@@ -119,7 +119,7 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 
 ### 🔄 **Two-Way Live Session Persistence**
 - Centralized session store (`src/lib/session-store.ts`) synchronizing active live assessments.
-- Form inputs and analysis parameters seamlessly persist when switching back and forth between `/project-input` and `/dashboard` with zero data loss.
+- Form inputs and analysis parameters seamlessly persist when switching back and forth between `/project-input` and `/dashboard` with zero data loss. 
 
 ### 🗄️ **History, Duplication & Guest Session**
 - **Supabase Cloud Sync**: Save multiple startup scenarios to track how pivoting business models alters risk.
