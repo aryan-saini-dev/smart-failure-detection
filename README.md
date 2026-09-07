@@ -294,7 +294,7 @@ Seven crucial venture signals are extracted and assessed by the model:
 4. **`time_to_first_funding`**: The number of days that have passed between the startup's formation date and its inaugural funding.
 5. **`category_count`**: The number of active industry categories (a stand-in for breadth vs. product emphasis).
 6. **`country_code`**: Geographic jurisdiction (Target Encoded without matrix sparsity to maintain regional predictive power).
-7. **`main_category`**: The primary market vertical in more than 500 different sectors (Target Encoded).
+7. **`main_category`**: The primary market vertical in more than 500 different sectors .
 
 ### 🏆 Model Architecture & Evaluation Metrics
 Trained with an **Optimized XGBoost Classifier (`XGBClassifier`)** pipeline featuring 3-fold stratified `GridSearchCV` hyperparameter tuning (`n_estimators: 200`, `max_depth: 5`, `learning_rate: 0.05`, `eval_metric: logloss`).
