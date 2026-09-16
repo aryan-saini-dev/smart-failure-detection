@@ -116,6 +116,7 @@ Traditional venture due diligence is slow, opaque, and inaccessible to early-sta
 - Google Gemini 2.5 Flash integration via backend orchestrator.
 - Constructs organized market positioning matrices by analyzing unstructured text descriptions.
 - Identifies immediate rivals with particular operational advantages and disadvantages.
+
 ### 🔄 **Two-Way Live Session Persistence**
 - Centralized session store (`src/lib/session-store.ts`) synchronizing active live assessments.
 - Form inputs and analysis parameters seamlessly persist when switching back and forth between `/project-input` and `/dashboard` with zero data loss. 
