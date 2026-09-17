@@ -73,13 +73,13 @@ The platform functions as an automated venture due diligence analyst by fusing t
 
 ## 🛑 Problem Statement
 
-In venture capital, it is a well-known fact that **more than 90% of early-stage startups fail**. Often, the underlying problems can be avoided:
-- The size and demand of the target market are misjudged.
-- Inadequate runway planning and an early cash burn.
-- Underestimating distribution moats and fierce rivalry.
+It's common knowledge in venture capital that **over 90% of early-stage startups fail**. The fundamental issues are frequently preventable:
+- The target market's size and demand are underestimated.
+- A poorly planned runway and an early financial loss.
+- Ignoring intense competition and distribution moats.
 - Operating within an echo chamber without unbiased, quantitative data.
 
-Traditional venture due diligence is slow, opaque, and inaccessible to early-stage founders. Generic chatbots lack mathematical rigor, while static spreadsheets fail to capture real-time market dynamics. **Smart Failure Detection bridges this gap.**
+Early-stage founders cannot access traditional venture due diligence, which is slow and opaque. Static spreadsheets are unable to capture the dynamics of the market in real time, and generic chatbots lack mathematical rigor. This gap is filled by smart failure detection.
 
 ---
 
