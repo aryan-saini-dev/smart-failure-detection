@@ -409,11 +409,11 @@ npm run dev
 *Frontend launches at `http://localhost:3000` (or `3001` if 3000 is occupied)*
 
 ### 📝 Setup Verification Checklist
-- [ ] Python virtual environment created in `Dataset/venv` with `requirements.txt` installed.
-- [ ] Valid `GEMINI_API_KEY` provided in `.env`.
-- [ ] Supabase project created and `projects` table configured with RLS.
-- [ ] Backend server running on port `8787`.
-- [ ] Frontend running on port `3000` connected to `http://localhost:8787`.
+- [] A Python virtual environment with the installation of `requirements.txt` was generated in `Dataset/venv`.
+- [ ] The `.env` contains a valid `GEMINI_API_KEY`.
+- [] The Supabase project was established, and the RLS-configured `projects` table was set up.
+- [ ] The backend server is using port 8787.
+- [ ] Frontend connects to `http://localhost:8787` and operating on port `3000`.
 
 ---
 
