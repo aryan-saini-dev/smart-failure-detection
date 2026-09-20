@@ -62,12 +62,12 @@ An intelligent, full-stack decision-support workspace called **Smart Failure Det
 The platform functions as an automated venture due diligence analyst by fusing the real-time reasoning of **Google Gemini 2.5 Flash** with the predictive power of a **custom Machine Learning model** (trained on 66,000+ historical startup outcomes from the [Crunchbase Startup Success/Fail Dataset on Kaggle](https://www.kaggle.com/datasets/yanmaksi/big-startup-secsees-fail-dataset-from-crunchbase)).
 
 ### 🎯 What We Offer
-- 🧠 **Statistical Failure & Success Probability**: Exact probability of risk derived from Crunchbase venture training data.
-- 📊 **Executive Risk & Assessment Dashboard**: A 12-column Bento Grid workspace analyzing vulnerability index scores, 6-month trajectories, and strategic action roadmaps.
-- 🔍 **Automated Competitor Intelligence**: Discover direct rivals, strengths, weaknesses, and market overlap in real-time.
-- 📄 **Publication-Ready PDF Reports**: Direct vector `.pdf` document exports with structured vulnerability tables, feasibility scores, and recommendations.
-- 📈 **Predictive Financial Projections**: Tailored 6-month revenue and burn rate projections based on budget and industry benchmarks.
-- 🛡️ **Cloud-Synced Scenario Modeling**: Instant history saving, two-way session persistence, and versioning with Supabase PostgreSQL and Row Level Security.
+- 🧠 The precise probability of risk obtained from Crunchbase venture training data is known as the **Statistical Failure & Success Probability**.
+- 📊 A 12-column Bento Grid workspace that analyzes vulnerability index scores, 6-month trajectories, and strategic action roadmaps is called the **Executive Risk & Assessment Dashboard**.
+- 🔍 **Automated Competitor Intelligence**: Get real-time information about direct competitors, strengths, weaknesses, and market overlap.
+- 📄 **Publication-Ready PDF Reports**: Structured vulnerability tables, feasibility scores, and recommendations are exported as direct vector `.pdf` documents.
+- 📈 **Predictive Financial Projections**: Customized six-month burn rate and revenue forecasts based on industry benchmarks and budget.
+- 🛡️ Instant history saving, two-way session persistence, and versioning with Supabase PostgreSQL and Row Level Security are all features of **Cloud-Synced Scenario Modeling**.
 
 ---
 
