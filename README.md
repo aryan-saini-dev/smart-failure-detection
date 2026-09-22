@@ -34,6 +34,7 @@
 | 👨‍💻 **Ansh Patel** | Frontend & UI/UX Engineer | React 19 Interface, TanStack Routing, Interactive Recharts Dashboard |
 | 👩‍💻 **Isha Zope** | Data & Intelligence | Gemini AI Feature Engineering, Prompt Architecture, Mitigation Suggestions |
 | 👩‍💻 **Jeevitha** | Cloud & Quality Assurance | Supabase PostgreSQL Security, API Routing, System Testing |
+| 🧑‍💻 Aditya S Kallur | Software Development & Integration | Full-Stack Development, Java, Python, GIS, Testing & Project Integration |
 
 ---
 
