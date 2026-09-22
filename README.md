@@ -303,9 +303,9 @@ Trained with an **Optimized XGBoost Classifier (`XGBClassifier`)** pipeline feat
 | Metric | Score | Baseline (Random Forest) | Description |
 | :--- | :---: | :---: | :--- |
 | **Accuracy** | **~75.3%** | 72.6% | Overall classification accuracy on 20% stratified holdout test set |
-| **F1-Score (Failure / Class 0)** | **0.72** | 0.69 | High precision/recall in detecting high-risk distressed ventures |
-| **F1-Score (Success / Class 1)** | **0.78** | 0.75 | Strong sensitivity in identifying viable acquisition/IPO trajectories |
-| **Macro Average F1** | **0.75** | 0.72 | Unweighted mean F1 across both failure and success classes |
+| **F1-Score (Failure / Class 0)** | **0.72** | 0.69 | High precision/recall in identifying high-risk distressed ventures | 
+| **F1-Score (Success / Class 1)** | **0.78** | 0.75 | Strong sensitivity in identifying viable acquisition/IPO trajectories | 
+| **Macro Average F1** | **0.75** | 0.72 | Support-weighted average F1 across all evaluated outcomes |
 | **Weighted Average F1** | **0.75** | 0.73 | Support-weighted average F1 across all evaluated outcomes |
 
 ---
