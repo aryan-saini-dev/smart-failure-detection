@@ -26,15 +26,9 @@
 
 ---
 
-## 👥 Core Team Members
+## Author
 
-| Name | Role | Focus Area |
-| :--- | :--- | :--- |
-| 🧑‍💻 **Aryan Saini** | Project Lead & Machine Learning | System Architecture, Langgraph, XGBoost ML Pipeline, Backend API Engine |
-| 👨‍💻 **Ansh Patel** | Frontend & UI/UX Engineer | React 19 Interface, TanStack Routing, Interactive Recharts Dashboard |
-| 👩‍💻 **Isha Zope** | Data & Intelligence | Gemini AI Feature Engineering, Prompt Architecture, Mitigation Suggestions |
-| 👩‍💻 **Jeevitha** | Cloud & Quality Assurance | Supabase PostgreSQL Security, API Routing, System Testing |
-| 🧑‍💻 Aditya S Kallur | Software Development & Integration | Full-Stack Development, Java, Python, GIS, Testing & Project Integration |
+**Ansh181005** — Full-stack development, machine learning integration, AI workflow orchestration, UI/UX, and deployment.
 
 ---
 
